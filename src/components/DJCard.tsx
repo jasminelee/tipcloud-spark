@@ -4,7 +4,20 @@ import { Users, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-interface DJCardProps {
+interface DJ {
+  id: string;
+  name: string;
+  genre: string;
+  image_url?: string;
+  followers?: number;
+  bio?: string;
+  soundcloud_url?: string;
+  wallet_address?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DirectDJCardProps {
   id: string;
   name: string;
   imageUrl: string;
@@ -13,7 +26,25 @@ interface DJCardProps {
   featured?: boolean;
 }
 
-const DJCard = ({ id, name, imageUrl, followers, genre, featured = false }: DJCardProps) => {
+// Props that accept either a DJ object or direct props
+type DJCardProps = 
+  | DirectDJCardProps 
+  | { dj: DJ; featured?: boolean };
+
+// Helper to determine if props are direct or from a DJ object
+const isDirectProps = (props: DJCardProps): props is DirectDJCardProps => {
+  return 'id' in props && !('dj' in props);
+};
+
+const DJCard = (props: DJCardProps) => {
+  // Extract values based on prop type
+  const id = isDirectProps(props) ? props.id : props.dj.id;
+  const name = isDirectProps(props) ? props.name : props.dj.name;
+  const imageUrl = isDirectProps(props) ? props.imageUrl : (props.dj.image_url || '');
+  const followers = isDirectProps(props) ? props.followers : (props.dj.followers || 0);
+  const genre = isDirectProps(props) ? props.genre : props.dj.genre;
+  const featured = 'featured' in props ? props.featured : false;
+
   const [isHovered, setIsHovered] = useState(false);
   
   const formattedFollowers = followers >= 1000 
