@@ -182,7 +182,40 @@ const HeroSection = () => {
             </div>
           </div>
           <div className="hidden lg:block">
-            <img src="/images/hero-dj.webp" alt="DJ with headphones" className="w-full h-auto rounded-xl shadow-xl" />
+            <div className="relative z-10 bg-white rounded-2xl shadow-hard overflow-hidden">
+              <div className="bg-soundcloud h-1" />
+              <div className="p-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-soundcloud/10 rounded-full flex items-center justify-center">
+                    <Music className="h-6 w-6 text-soundcloud" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="font-medium">Melodic Master</h3>
+                    <p className="text-sm text-muted-foreground">House · 42.5K followers</p>
+                  </div>
+                </div>
+                
+                <div className="rounded-lg overflow-hidden bg-secondary/50 h-48 mb-6 flex items-center justify-center">
+                  <div className="text-center">
+                    <Music className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground mt-2">SoundCloud Player</p>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-2 mb-2">
+                  <Button className="flex-1 bg-soundcloud text-white hover:bg-soundcloud-dark">
+                    <HandCoins size={16} className="mr-2" />
+                    Tip DJ
+                  </Button>
+                  <Button variant="outline" size="icon">
+                    <Heart size={16} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="absolute top-8 right-8 w-64 h-64 bg-tipOrange-100 rounded-full filter blur-3xl opacity-20 z-0" />
+            <div className="absolute bottom-12 left-12 w-32 h-32 bg-soundcloud rounded-full filter blur-3xl opacity-10 z-0" />
           </div>
         </div>
       </div>
