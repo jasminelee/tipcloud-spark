@@ -79,6 +79,73 @@ const mockDJs = [
   },
 ];
 
+// Add more mock DJs
+const additionalMockDJs = [
+  {
+    id: "mock-6",
+    name: "Vinyl Virtuoso",
+    genre: "Lo-Fi",
+    bio: "Creating chill beats perfect for studying or relaxing. Specializing in lo-fi hip hop with jazz influences and nostalgic vinyl scratches.",
+    soundcloud_url: "https://soundcloud.com/vinyl-virtuoso",
+    wallet_address: "bc1q7x6n5m4k3l2j0h9g8f7d6s5a4p3m2n1q0w9e8",
+    image_url: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=2069&auto=format&fit=crop",
+    followers: 6700,
+    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-7",
+    name: "Tropical Thunder",
+    genre: "Tropical House",
+    bio: "Bringing the beach vibes to your speakers with uplifting tropical house tracks. Inspired by ocean waves and island getaways.",
+    soundcloud_url: "https://soundcloud.com/tropical-thunder",
+    wallet_address: "bc1q9w8e7r6t5y4u3i2o1p0a9s8d7f6g5h4j3k2l1",
+    image_url: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=2070&auto=format&fit=crop",
+    followers: 5200,
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 1 week ago
+    updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-8",
+    name: "Midnight Groove",
+    genre: "Deep House",
+    bio: "Late night deep house sessions that transport you to underground clubs. Known for hypnotic beats and atmospheric soundscapes.",
+    soundcloud_url: "https://soundcloud.com/midnight-groove",
+    wallet_address: "bc1q2a3s4d5f6g7h8j9k0l1z2x3c4v5b6n7m8q9w0",
+    image_url: "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=2070&auto=format&fit=crop",
+    followers: 7800,
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 2 weeks ago
+    updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-9",
+    name: "Quantum Beats",
+    genre: "Experimental",
+    bio: "Pushing the boundaries of electronic music with innovative sound design and experimental arrangements. Expect the unexpected.",
+    soundcloud_url: "https://soundcloud.com/quantum-beats",
+    wallet_address: "bc1q9p8o7i6u5y4t3r2e1w0q9a8s7d6f5g4h3j2k1",
+    image_url: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=2070&auto=format&fit=crop",
+    followers: 3300,
+    created_at: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(), // 3 weeks ago
+    updated_at: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-10",
+    name: "Neon Pulse",
+    genre: "Synthwave",
+    bio: "Retro-futuristic synthwave inspired by 80s movies and video games. Creating nostalgic electronic soundtracks for night drives.",
+    soundcloud_url: "https://soundcloud.com/neon-pulse",
+    wallet_address: "bc1q8k7j6h5g4f3d2s1a0p9o8i7u6y5t4r3e2w1q0",
+    image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=2074&auto=format&fit=crop",
+    followers: 6100,
+    created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 1 month ago
+    updated_at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+];
+
+// Combine all mock DJs
+const allMockDJs = [...mockDJs, ...additionalMockDJs];
+
 // Define types
 interface DJ {
   id: string;
@@ -117,18 +184,33 @@ const DJDirectory = () => {
       }
       
       if (data && data.length > 0) {
-        // Use real data from Supabase
-        setDjs(data);
+        // Combine real data with mock data
+        // Use a Map with id as key to avoid duplicates
+        const combinedDjsMap = new Map();
+        
+        // Add Supabase data first
+        data.forEach(dj => combinedDjsMap.set(dj.id, dj));
+        
+        // Then add mock data (won't override real data with same id)
+        allMockDJs.forEach(dj => {
+          if (!combinedDjsMap.has(dj.id)) {
+            combinedDjsMap.set(dj.id, dj);
+          }
+        });
+        
+        // Convert map back to array
+        setDjs(Array.from(combinedDjsMap.values()));
+        console.log(`Loaded ${data.length} real DJs and ${combinedDjsMap.size - data.length} mock DJs`);
       } else {
-        // Use mock data if no real data exists
-        console.log('No DJs found in database, using mock data');
-        setDjs(mockDJs);
+        // Use all mock data if no real data exists
+        console.log('No DJs found in database, using all mock data');
+        setDjs(allMockDJs);
       }
     } catch (error) {
       console.error('Error fetching DJs:', error);
       toast.error('Failed to load DJ profiles');
       // Fallback to mock data
-      setDjs(mockDJs);
+      setDjs(allMockDJs);
     } finally {
       setLoading(false);
     }

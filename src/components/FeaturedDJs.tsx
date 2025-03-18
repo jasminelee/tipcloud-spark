@@ -58,6 +58,49 @@ const MOCK_FEATURED_DJS = [
   }
 ];
 
+// Add more mock featured DJs
+const ADDITIONAL_MOCK_DJS = [
+  {
+    id: "mock-featured-1",
+    name: "DJ Astra",
+    genre: "Progressive House",
+    bio: "Pioneer of progressive house with ethereal soundscapes and mesmerizing melodies. Regular headliner at top electronic music festivals.",
+    soundcloud_url: "https://soundcloud.com/dj-astra",
+    wallet_address: "bc1q6n5m4k3l2j0h9g8f7d6s5a4p3m2z1x0c9v8b",
+    image_url: "https://images.unsplash.com/photo-1516873240891-4bf014598ab4?q=80&w=1000&auto=format&fit=crop",
+    followers: 12500,
+    created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-featured-2",
+    name: "Bass Prophet",
+    genre: "Dubstep",
+    bio: "The future of dubstep is here. Known for earth-shaking bass drops and innovative sound design that pushes the boundaries of electronic music.",
+    soundcloud_url: "https://soundcloud.com/bass-prophet",
+    wallet_address: "bc1q7n6m5k4j3h2g1f0d9s8a7p6l5r4e3w2q1t0y",
+    image_url: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=1000&auto=format&fit=crop",
+    followers: 18700,
+    created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mock-featured-3",
+    name: "Vinyl Queen",
+    genre: "Classic House",
+    bio: "Keeping the classic house sound alive with vinyl-only sets and infectious grooves. Bringing the authentic underground club experience to every performance.",
+    soundcloud_url: "https://soundcloud.com/vinyl-queen",
+    wallet_address: "bc1q2w3e4r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9l",
+    image_url: "https://images.unsplash.com/photo-1583265627959-fb7042f5133b?q=80&w=1974&auto=format&fit=crop",
+    followers: 15900,
+    created_at: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+];
+
+// Combine all mock featured DJs
+const ALL_MOCK_FEATURED_DJS = [...MOCK_FEATURED_DJS, ...ADDITIONAL_MOCK_DJS];
+
 interface DJ {
   id: string;
   name: string;
@@ -80,27 +123,56 @@ const FeaturedDJs = () => {
   const fetchFeaturedDJs = async () => {
     setLoading(true);
     try {
-      // Try to fetch from Supabase (limit to 4 DJs, ordered by followers or newest)
+      // Try to fetch from Supabase (limit to 4-8 DJs, ordered by followers)
       const { data, error } = await supabase
         .from('dj_profiles')
         .select('*')
         .order('followers', { ascending: false })
-        .limit(4);
+        .limit(8);
       
       if (error) {
         throw error;
       }
       
       if (data && data.length > 0) {
-        setFeaturedDjs(data);
+        // If we have real data, mix it with some mock data to ensure variety
+        // Use a Map to avoid duplicates
+        const combinedDjsMap = new Map();
+        
+        // Add real data first
+        data.forEach(dj => combinedDjsMap.set(dj.id, dj));
+        
+        // If we have fewer than 8 real DJs, add some mock ones
+        if (data.length < 8) {
+          // Add mock DJs until we reach 8 total
+          let mockAdded = 0;
+          for (const mockDj of ALL_MOCK_FEATURED_DJS) {
+            if (!combinedDjsMap.has(mockDj.id)) {
+              combinedDjsMap.set(mockDj.id, mockDj);
+              mockAdded++;
+              if (combinedDjsMap.size >= 8) break; // Stop once we have 8 total
+            }
+          }
+          console.log(`Added ${mockAdded} mock featured DJs to ${data.length} real DJs`);
+        }
+        
+        // Convert map to array and limit to 8
+        const combinedDjs = Array.from(combinedDjsMap.values());
+        
+        // Sort by followers (descending)
+        combinedDjs.sort((a, b) => (b.followers || 0) - (a.followers || 0));
+        
+        // Use up to 8 DJs
+        setFeaturedDjs(combinedDjs.slice(0, 8));
       } else {
-        console.log('No featured DJs found, using mock data');
-        setFeaturedDjs(MOCK_FEATURED_DJS);
+        console.log('No featured DJs found, using all mock data');
+        // If we have no real data, use all mock data (up to 8)
+        setFeaturedDjs(ALL_MOCK_FEATURED_DJS.slice(0, 8));
       }
     } catch (error) {
       console.error('Error fetching featured DJs:', error);
       // Fallback to mock data
-      setFeaturedDjs(MOCK_FEATURED_DJS);
+      setFeaturedDjs(ALL_MOCK_FEATURED_DJS.slice(0, 8));
     } finally {
       setLoading(false);
     }
@@ -144,21 +216,42 @@ const FeaturedDJs = () => {
             <p className="text-muted-foreground">Loading featured DJs...</p>
           </div>
         ) : (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 transform transition-opacity duration-1000 ${
+          <div className={`transform transition-opacity duration-1000 ${
             isVisible ? 'opacity-100' : 'opacity-0'
           }`}>
-            {featuredDjs.map((dj, index) => (
-              <div 
-                key={dj.id} 
-                className="transform transition-all duration-700 ease-out"
-                style={{ 
-                  transitionDelay: `${index * 100}ms`,
-                  transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
-                }}
-              >
-                <DJCard dj={dj} />
+            {/* First row - first 4 DJs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
+              {featuredDjs.slice(0, 4).map((dj, index) => (
+                <div 
+                  key={dj.id} 
+                  className="transform transition-all duration-700 ease-out"
+                  style={{ 
+                    transitionDelay: `${index * 100}ms`,
+                    transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
+                  }}
+                >
+                  <DJCard dj={dj} />
+                </div>
+              ))}
+            </div>
+            
+            {/* Second row - next 4 DJs (if present) */}
+            {featuredDjs.length > 4 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                {featuredDjs.slice(4, 8).map((dj, index) => (
+                  <div 
+                    key={dj.id} 
+                    className="transform transition-all duration-700 ease-out"
+                    style={{ 
+                      transitionDelay: `${(index + 4) * 100}ms`,
+                      transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
+                    }}
+                  >
+                    <DJCard dj={dj} />
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
         
