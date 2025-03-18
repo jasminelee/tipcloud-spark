@@ -8,13 +8,82 @@ import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TipModal from '@/components/TipModal';
-import { supabase } from '@/integrations/supabase/client';
 
-const SAMPLE_TRACKS = [
-  { id: "t1", title: "Summer Waves", plays: 124500 },
-  { id: "t2", title: "Midnight Groove", plays: 98700 },
-  { id: "t3", title: "Electric Dreams", plays: 156200 },
-];
+// Sample DJ data
+const DJS = {
+  "dj1": {
+    id: "dj1",
+    name: "Melodic Master",
+    imageUrl: "https://images.unsplash.com/photo-1571741140674-8949ca7df2a7?q=80&w=1000&auto=format&fit=crop",
+    coverUrl: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2000&auto=format&fit=crop",
+    followers: 42500,
+    genre: "House",
+    location: "Berlin, Germany",
+    bio: "Pioneering the house music scene since 2015, Melodic Master creates immersive soundscapes that take listeners on a journey through rhythm and melody.",
+    soundcloudUrl: "https://soundcloud.com/melodicmaster",
+    walletAddress: "bc1q3x5c7v8m6q9s2rsete4sf2g5w6x5v0a3k5",
+    joinedDate: "2015-04-12",
+    tracks: [
+      { id: "t1", title: "Summer Waves", plays: 124500 },
+      { id: "t2", title: "Midnight Groove", plays: 98700 },
+      { id: "t3", title: "Electric Dreams", plays: 156200 },
+    ]
+  },
+  "dj2": {
+    id: "dj2",
+    name: "Beat Virtuoso",
+    imageUrl: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=1000&auto=format&fit=crop",
+    coverUrl: "https://images.unsplash.com/photo-1501612780327-45045538702b?q=80&w=2000&auto=format&fit=crop",
+    followers: 31200,
+    genre: "EDM",
+    location: "Los Angeles, USA",
+    bio: "Beat Virtuoso pushes the boundaries of EDM with innovative drops and melodic hooks that energize dance floors worldwide.",
+    soundcloudUrl: "https://soundcloud.com/beatvirtuoso",
+    walletAddress: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    joinedDate: "2017-08-25",
+    tracks: [
+      { id: "t4", title: "Neon Lights", plays: 87300 },
+      { id: "t5", title: "Pulse", plays: 102400 },
+      { id: "t6", title: "Energy Surge", plays: 94600 },
+    ]
+  },
+  "dj3": {
+    id: "dj3",
+    name: "Rhythm Alchemist",
+    imageUrl: "https://images.unsplash.com/photo-1516873240891-4bf014598ab4?q=80&w=1000&auto=format&fit=crop",
+    coverUrl: "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=2000&auto=format&fit=crop",
+    followers: 28900,
+    genre: "Techno",
+    location: "Detroit, USA",
+    bio: "Rhythm Alchemist transforms raw techno elements into gold, crafting hypnotic beats that captivate audiences in clubs around the world.",
+    soundcloudUrl: "https://soundcloud.com/rhythmalchemist",
+    walletAddress: "bc1q9h2xmp0psr6mzm5pqwuy4qmsj4g9jy52vuj7aj",
+    joinedDate: "2016-02-10",
+    tracks: [
+      { id: "t7", title: "Warehouse", plays: 76800 },
+      { id: "t8", title: "Machine Code", plays: 83500 },
+      { id: "t9", title: "Industrial Complex", plays: 91200 },
+    ]
+  },
+  "dj4": {
+    id: "dj4",
+    name: "Sonic Wave",
+    imageUrl: "https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1000&auto=format&fit=crop",
+    coverUrl: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=2000&auto=format&fit=crop",
+    followers: 35600,
+    genre: "Trance",
+    location: "Amsterdam, Netherlands",
+    bio: "Sonic Wave creates ethereal trance compositions that transport listeners to other dimensions with atmospheric sounds and driving rhythms.",
+    soundcloudUrl: "https://soundcloud.com/sonicwave",
+    walletAddress: "bc1qm5th5azmjq3lkrm98shsdt8xr4j92m0w5all8l",
+    joinedDate: "2014-11-05",
+    tracks: [
+      { id: "t10", title: "Cosmic Journey", plays: 115700 },
+      { id: "t11", title: "Astral Projection", plays: 128300 },
+      { id: "t12", title: "Event Horizon", plays: 143900 },
+    ]
+  }
+};
 
 const DJProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,42 +93,18 @@ const DJProfile = () => {
   const [activeTab, setActiveTab] = useState("tracks");
   
   useEffect(() => {
+    // Scroll to top on page load
     window.scrollTo(0, 0);
     
-    const fetchDJProfile = async () => {
-      try {
-        setLoading(true);
-        
-        if (!id) return;
-        
-        const { data, error } = await supabase
-          .from('dj_profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          // Add default values for properties that might not exist in the database
-          const djWithTracks = {
-            ...data,
-            tracks: SAMPLE_TRACKS,
-            location: 'Unknown Location', // Default location
-            joinedDate: data.created_at,
-            coverUrl: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2000&auto=format&fit=crop" // Default cover image
-          };
-          
-          setDj(djWithTracks);
-        }
-      } catch (error) {
-        console.error("Error fetching DJ profile:", error);
-      } finally {
-        setLoading(false);
+    // Simulate API fetch with timeout
+    const timer = setTimeout(() => {
+      if (id && DJS[id as keyof typeof DJS]) {
+        setDj(DJS[id as keyof typeof DJS]);
       }
-    };
+      setLoading(false);
+    }, 500);
     
-    fetchDJProfile();
+    return () => clearTimeout(timer);
   }, [id]);
   
   const handleShare = () => {
@@ -129,6 +174,7 @@ const DJProfile = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
+        {/* Cover Image */}
         <div className="relative h-64 md:h-80 lg:h-96 w-full overflow-hidden">
           <div className="absolute inset-0 bg-gray-900/30"></div>
           <img 
@@ -140,11 +186,12 @@ const DJProfile = () => {
         </div>
         
         <div className="container mx-auto px-4 max-w-7xl">
+          {/* Profile Header */}
           <div className="relative -mt-20 mb-8">
             <div className="flex flex-col md:flex-row">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-4 border-background shadow-lg">
                 <img 
-                  src={dj.image_url} 
+                  src={dj.imageUrl} 
                   alt={dj.name}
                   className="w-full h-full object-cover"
                 />
@@ -180,7 +227,7 @@ const DJProfile = () => {
                 <Share2 size={18} className="mr-2" />
                 Share
               </Button>
-              <a href={dj.soundcloud_url} target="_blank" rel="noopener noreferrer">
+              <a href={dj.soundcloudUrl} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline">
                   <ExternalLink size={18} className="mr-2" />
                   SoundCloud
@@ -189,6 +236,7 @@ const DJProfile = () => {
             </div>
           </div>
           
+          {/* Bio & Info */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8 mb-12">
             <div className="lg:col-span-2">
               <h2 className="text-xl font-medium mb-3">Bio</h2>
@@ -216,6 +264,7 @@ const DJProfile = () => {
             </div>
           </div>
           
+          {/* Tabs Section */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-16">
             <TabsList>
               <TabsTrigger value="tracks">Tracks</TabsTrigger>
@@ -264,7 +313,7 @@ const DJProfile = () => {
                   <h3 className="text-lg font-medium mb-4">Connect</h3>
                   <div className="space-y-4">
                     <a 
-                      href={dj.soundcloud_url}
+                      href={dj.soundcloudUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center text-muted-foreground hover:text-soundcloud transition-colors"
@@ -293,8 +342,8 @@ const DJProfile = () => {
         open={tipModalOpen}
         onOpenChange={setTipModalOpen}
         djName={dj.name}
-        djImageUrl={dj.image_url}
-        djWalletAddress={dj.wallet_address}
+        djImageUrl={dj.imageUrl}
+        djWalletAddress={dj.walletAddress}
       />
     </div>
   );

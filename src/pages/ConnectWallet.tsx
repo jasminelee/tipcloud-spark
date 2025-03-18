@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -58,6 +57,11 @@ const ConnectWallet = () => {
             console.error("Error fetching wallet addresses:", addressError);
           }
         }
+        
+        // If already connected, redirect to home after a short delay
+        if (connected) {
+          setTimeout(() => navigate('/'), 1000);
+        }
       } catch (error) {
         console.error("Error checking wallet connection:", error);
         setIsConnected(false);
@@ -67,7 +71,7 @@ const ConnectWallet = () => {
     };
     
     checkConnection();
-  }, []);
+  }, [navigate]);
   
   const handleConnectWallet = async () => {
     setIsConnecting(true);
@@ -90,6 +94,10 @@ const ConnectWallet = () => {
                   setUserAddress(stacksAddress);
                 }
               }
+              
+              setTimeout(() => {
+                navigate('/');
+              }, 500);
             } else {
               toast.error("Failed to connect Leather wallet", {
                 description: "Connection was rejected or failed. Please try again."
@@ -109,6 +117,10 @@ const ConnectWallet = () => {
             if (result.connected) {
               setIsConnected(true);
               toast.success("Wallet connected successfully!");
+              
+              setTimeout(() => {
+                navigate('/');
+              }, 500);
             } else {
               toast.error("Failed to connect wallet", {
                 description: "Connection was rejected or failed. Please try again."
