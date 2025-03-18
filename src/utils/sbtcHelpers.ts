@@ -27,7 +27,7 @@ const SBTC_EXPLORER_URL = 'https://explorer.stacks.co/txid';
 const SATOSHIS_PER_BTC = 100000000;
 
 // Network configuration - use testnet for development, change to mainnet for production
-const network = 'testnet';
+const network = 'mainnet';
 
 // AppConfig for Stacks Connect
 const appConfig = new AppConfig(['store_write']);

@@ -83,14 +83,39 @@ const DJProfile = () => {
   }, [id]);
   
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Check out ${dj?.name} on TipCloud`,
-        text: `Support ${dj?.name}, a talented SoundCloud DJ on TipCloud!`,
-        url: window.location.href,
-      }).catch(error => console.log('Error sharing', error));
-    } else {
+    try {
+      if (navigator.share) {
+        navigator.share({
+          title: `Check out ${dj?.name} on TipCloud`,
+          text: `Support ${dj?.name}, a talented SoundCloud DJ on TipCloud!`,
+          url: window.location.href,
+        }).catch(error => {
+          console.error('Error sharing:', error);
+          // Fall back to clipboard if sharing fails
+          copyToClipboard();
+        });
+      } else {
+        copyToClipboard();
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      copyToClipboard();
+    }
+  };
+  
+  const copyToClipboard = () => {
+    try {
       navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    } catch (error) {
+      console.error('Clipboard error:', error);
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = window.location.href;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
       toast.success("Link copied to clipboard!");
     }
   };
