@@ -54,8 +54,38 @@ export const sendSBTC = async (
  * Check if SBTC wallet is connected
  * @returns Boolean indicating if wallet is connected
  */
-export const isSBTCWalletConnected = (): boolean => {
-  return typeof window !== 'undefined' && !!window.btc;
+export const isSBTCWalletConnected = async (): Promise<boolean> => {
+  // Check for window.btc existence
+  if (typeof window === 'undefined' || !window.btc) {
+    console.log("No Bitcoin wallet detected");
+    return false;
+  }
+  
+  try {
+    // Try to get accounts or address to verify actual connection
+    // This is a common pattern with Bitcoin wallets
+    if (window.btc.request) {
+      const accounts = await window.btc.request({ method: 'getAccounts' }).catch(() => null);
+      return Array.isArray(accounts) && accounts.length > 0;
+    }
+    
+    // Leather wallet specific check
+    if (window.btc.getAccounts) {
+      const accounts = await window.btc.getAccounts().catch(() => null);
+      return Array.isArray(accounts) && accounts.length > 0;
+    }
+    
+    // Fallback for other wallet implementations
+    if (window.btc.address || window.btc.accounts) {
+      return true;
+    }
+    
+    console.log("Wallet detected but not connected");
+    return false;
+  } catch (error) {
+    console.error("Error checking wallet connection:", error);
+    return false;
+  }
 };
 
 /**
@@ -72,18 +102,23 @@ export const connectSBTCWallet = async (): Promise<boolean> => {
   
   try {
     // In a real implementation, this would be the actual wallet connection code
-    // For now, we simulate a successful connection if window.btc exists
     
-    // Some wallets might require explicit permission or have a connect method
+    // Handle Leather wallet connection
     if (window.btc.request) {
-      await window.btc.request({ method: 'request_accounts' });
+      await window.btc.request({ method: 'getAccounts' }).catch(() => {
+        // If getAccounts fails, try requesting accounts
+        return window.btc.request({ method: 'request_accounts' });
+      });
     }
     
     // Wait a bit to simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    console.log("SBTC wallet connected successfully");
-    return true;
+    // Verify connection after attempting to connect
+    const isConnected = await isSBTCWalletConnected();
+    
+    console.log(`SBTC wallet connection ${isConnected ? 'successful' : 'failed'}`);
+    return isConnected;
   } catch (error) {
     console.error("Error connecting to wallet:", error);
     return false;

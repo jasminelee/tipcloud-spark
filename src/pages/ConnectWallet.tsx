@@ -11,13 +11,23 @@ import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
 const ConnectWallet = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(true);
   const navigate = useNavigate();
   
   useEffect(() => {
     // Check if wallet is already connected
     const checkConnection = async () => {
-      const connected = isSBTCWalletConnected();
-      setIsConnected(connected);
+      setCheckingConnection(true);
+      try {
+        const connected = await isSBTCWalletConnected();
+        console.log("Wallet connection check result:", connected);
+        setIsConnected(connected);
+      } catch (error) {
+        console.error("Error checking wallet connection:", error);
+        setIsConnected(false);
+      } finally {
+        setCheckingConnection(false);
+      }
     };
     
     checkConnection();
@@ -74,19 +84,32 @@ const ConnectWallet = () => {
             
             <div className="space-y-4 mb-6">
               <div className="p-4 rounded-lg border border-muted bg-secondary/30 flex items-start space-x-3">
-                {isConnected ? (
-                  <CircleCheck className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                {checkingConnection ? (
+                  <div className="flex items-center space-x-2 w-full justify-center py-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-soundcloud border-t-transparent rounded-full"></div>
+                    <span className="text-sm">Checking wallet status...</span>
+                  </div>
+                ) : isConnected ? (
+                  <>
+                    <CircleCheck className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-medium">Wallet Status</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Your wallet is connected and ready to send tips.
+                      </p>
+                    </div>
+                  </>
                 ) : (
-                  <CircleAlert className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <>
+                    <CircleAlert className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-medium">Wallet Status</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Connect your wallet to start tipping SoundCloud DJs.
+                      </p>
+                    </div>
+                  </>
                 )}
-                <div>
-                  <h3 className="font-medium">Wallet Status</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {isConnected 
-                      ? "Your wallet is connected and ready to send tips." 
-                      : "Connect your wallet to start tipping SoundCloud DJs."}
-                  </p>
-                </div>
               </div>
             </div>
             
@@ -102,10 +125,10 @@ const ConnectWallet = () => {
               <Button 
                 className="w-full bg-soundcloud hover:bg-soundcloud-dark text-white font-medium py-6"
                 onClick={handleConnectWallet}
-                disabled={isConnecting}
+                disabled={isConnecting || checkingConnection}
               >
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
-                {!isConnecting && <ArrowRight size={18} className="ml-2" />}
+                {!isConnecting && !checkingConnection && <ArrowRight size={18} className="ml-2" />}
               </Button>
             )}
             
