@@ -27,14 +27,14 @@ const About = () => {
           
           <div className="container mx-auto px-4 max-w-7xl text-center">
             <span className="inline-block bg-soundcloud/10 text-soundcloud px-4 py-1 rounded-full text-sm font-medium mb-4">
-              About TipTune
+              About TipCloud
             </span>
             <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
               Connecting Fans with SoundCloud DJs
             </h1>
             <p className="text-muted-foreground text-lg mx-auto max-w-2xl mb-12">
-              TipTune is a platform designed to create a direct connection between 
-              music fans and SoundCloud DJs through SBTC micropayments.
+              TipCloud is a platform designed to create a direct connection between 
+              music fans and SoundCloud DJs through sBTC micropayments.
             </p>
           </div>
         </section>
@@ -47,12 +47,12 @@ const About = () => {
                 <h2 className="text-3xl font-display font-bold mb-6">Our Mission</h2>
                 <p className="text-muted-foreground mb-6">
                   We believe that artists should be fairly compensated for their work. 
-                  TipTune was created to solve a fundamental challenge in the music industry: 
+                  TipCloud was created to solve a fundamental challenge in the music industry: 
                   how can fans directly support their favorite DJs without intermediaries 
                   taking large portions of the payment?
                 </p>
                 <p className="text-muted-foreground mb-6">
-                  Using SBTC on Bitcoin, we've built a platform that allows for secure, 
+                  Using sBTC on Bitcoin, we've built a platform that allows for secure, 
                   instant micropayments directly to artists. This creates a more sustainable 
                   ecosystem where DJs can focus on creating great music while receiving 
                   support from their true fans.
@@ -80,7 +80,7 @@ const About = () => {
                       {
                         icon: <Shield className="h-8 w-8 text-soundcloud" />,
                         title: "Secure Payments",
-                        description: "SBTC provides secure, low-fee transactions on the Bitcoin network."
+                        description: "sBTC provides secure, low-fee transactions on the Bitcoin network."
                       },
                       {
                         icon: <Wallet className="h-8 w-8 text-soundcloud" />,
@@ -113,10 +113,10 @@ const About = () => {
                 Simple Process
               </span>
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                How TipTune Works
+                How TipCloud Works
               </h2>
               <p className="text-muted-foreground mx-auto max-w-2xl">
-                TipTune makes it easy to support your favorite SoundCloud DJs in just a few steps.
+                TipCloud makes it easy to support your favorite SoundCloud DJs in just a few steps.
               </p>
             </div>
             
@@ -130,7 +130,7 @@ const About = () => {
                 {
                   step: "02",
                   title: "Connect Wallet",
-                  description: "Connect your SBTC-compatible wallet securely to the platform."
+                  description: "Connect your sBTC-compatible wallet securely to the platform."
                 },
                 {
                   step: "03",
@@ -158,23 +158,23 @@ const About = () => {
           </div>
         </section>
         
-        {/* SBTC Section */}
+        {/* sBTC Section */}
         <section className="py-16 bg-secondary/30 relative overflow-hidden">
           <div className="container mx-auto px-4 max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <span className="inline-block bg-soundcloud/10 text-soundcloud px-4 py-1 rounded-full text-sm font-medium mb-4">
-                  Powered by SBTC
+                  Powered by Stacks Connect
                 </span>
                 <h2 className="text-3xl font-display font-bold mb-6">
                   Bitcoin Micropayments Made Simple
                 </h2>
                 <p className="text-muted-foreground mb-4">
-                  SBTC brings the power of Bitcoin to TipTune, enabling fast, low-cost 
+                  sBTC brings the power of Bitcoin to TipCloud, enabling fast, low-cost 
                   micropayments that are perfect for tipping your favorite SoundCloud DJs.
                 </p>
                 <p className="text-muted-foreground mb-6">
-                  With SBTC, you can send tips as small as a few sats, making it easy to 
+                  With sBTC, you can send tips as small as a few sats, making it easy to 
                   show your appreciation for every track you enjoy.
                 </p>
                 <a 
@@ -190,13 +190,13 @@ const About = () => {
               
               <div className="glass p-8 rounded-2xl relative">
                 <div className="absolute -top-6 -right-6 bg-soundcloud/10 rounded-full px-4 py-2 font-medium text-soundcloud">
-                  SBTC
+                  sBTC
                 </div>
                 <div className="space-y-4">
                   <div className="p-4 bg-white/50 rounded-lg">
                     <h4 className="font-medium mb-2">Fast Transactions</h4>
                     <p className="text-sm text-muted-foreground">
-                      SBTC enables near-instant payments, so your support reaches artists immediately.
+                    sBTC enables near-instant payments, so your support reaches artists immediately.
                     </p>
                   </div>
                   <div className="p-4 bg-white/50 rounded-lg">
@@ -224,7 +224,7 @@ const About = () => {
               Ready to Support Your Favorite DJs?
             </h2>
             <p className="text-muted-foreground mx-auto max-w-2xl mb-8">
-              Join TipTune today and start supporting the SoundCloud DJs who create the music you love.
+              Join TipCloud today and start supporting the SoundCloud DJs who create the music you love.
               Your support makes a real difference in their ability to continue creating amazing tracks.
             </p>
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">

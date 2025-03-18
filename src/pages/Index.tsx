@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeaturedDJs from '@/components/FeaturedDJs';
-import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,7 +42,7 @@ const HeroSection = () => {
       // Check if Leather wallet is installed
       if (window.LeatherProvider) {
         try {
-          const result = await connectSBTCWallet();
+          const result = await connectsBTCWallet();
           
           if (result.connected) {
             setIsWalletConnected(true);
@@ -75,7 +74,7 @@ const HeroSection = () => {
       // Check for other wallet types
       if (window.btc) {
         try {
-          const result = await connectSBTCWallet();
+          const result = await connectsBTCWallet();
           
           if (result.connected) {
             setIsWalletConnected(true);
@@ -153,7 +152,7 @@ const HeroSection = () => {
               Directly
             </h1>
             <p className="text-lg text-gray-700 mb-8 max-w-lg">
-              TipTune makes it easy to support your favorite SoundCloud DJs with Bitcoin 
+              TipCloud makes it easy to support your favorite SoundCloud DJs with Bitcoin 
               micropayments, creating a direct connection between artists and fans.
             </p>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
@@ -257,10 +256,10 @@ const FeatureSection = () => {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-            How TipTune Works
+            How TipCloud Works
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            TipTune provides a seamless way to support SoundCloud DJs using SBTC micropayments,
+            TipCloud provides a seamless way to support SoundCloud DJs using sBTC micropayments,
             creating a direct connection between artists and their fans.
           </p>
         </div>
@@ -274,8 +273,8 @@ const FeatureSection = () => {
             },
             {
               icon: <HandCoins className="h-8 w-8 text-soundcloud" />,
-              title: "Send Tips with SBTC",
-              description: "Support your favorite DJs directly with SBTC micropayments - quick, easy, and secure."
+              title: "Send Tips with sBTC",
+              description: "Support your favorite DJs directly with sBTC micropayments - quick, easy, and secure."
             },
             {
               icon: <Heart className="h-8 w-8 text-soundcloud" />,
@@ -312,7 +311,7 @@ const DJPromotionSection = () => {
               Are You a <span className="text-purple-600">SoundCloud DJ</span>?
             </h2>
             <p className="text-lg text-gray-700 mb-8">
-              Join TipTune and start receiving sBTC tips directly from your fans. Connect your SoundCloud profile, set up your wallet, and start earning today.
+              Join TipCloud and start receiving sBTC tips directly from your fans. Connect your SoundCloud profile, set up your wallet, and start earning today.
             </p>
             <ul className="space-y-4 mb-8">
               <li className="flex items-start">

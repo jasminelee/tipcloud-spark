@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="md:col-span-2">
             <AnimatedLogo className="mb-4" />
             <p className="text-muted-foreground max-w-md">
-              TipTune connects SoundCloud DJs with their fans through SBTC micropayments,
+              TipCloud connects SoundCloud DJs with their fans through sBTC micropayments,
               making it easy to support your favorite artists directly.
             </p>
             <div className="flex space-x-4 mt-6">
@@ -21,7 +21,7 @@ const Footer = () => {
               <a href="https://twitter.com" className="text-muted-foreground hover:text-soundcloud transition-colors" target="_blank" rel="noopener noreferrer">
                 <Twitter size={20} />
               </a>
-              <a href="mailto:info@tiptune.com" className="text-muted-foreground hover:text-soundcloud transition-colors">
+              <a href="mailto:info@TipCloud.com" className="text-muted-foreground hover:text-soundcloud transition-colors">
                 <Mail size={20} />
               </a>
             </div>
@@ -68,10 +68,10 @@ const Footer = () => {
         <div className="mt-16 pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} TipTune. All rights reserved.
+              © {new Date().getFullYear()} TipCloud. All rights reserved.
             </p>
             <p className="text-sm text-muted-foreground mt-2 md:mt-0">
-              Powered by SBTC on Bitcoin
+              Powered by Stacks Connect
             </p>
           </div>
         </div>

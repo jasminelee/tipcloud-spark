@@ -63,8 +63,8 @@ const DJProfile = () => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Check out ${dj?.name} on TipTune`,
-        text: `Support ${dj?.name}, a talented SoundCloud DJ on TipTune!`,
+        title: `Check out ${dj?.name} on TipCloud`,
+        text: `Support ${dj?.name}, a talented SoundCloud DJ on TipCloud!`,
         url: window.location.href,
       }).catch(error => console.log('Error sharing', error));
     } else {
@@ -207,7 +207,7 @@ const DJProfile = () => {
               <h2 className="text-xl font-medium mb-4">Support {dj.name}</h2>
               <p className="text-muted-foreground text-sm mb-6">
                 Your tips help {dj.name} continue creating the music you love. 
-                Support directly with SBTC.
+                Support directly with sBTC.
               </p>
               <Button 
                 className="w-full bg-soundcloud hover:bg-soundcloud-dark text-white"

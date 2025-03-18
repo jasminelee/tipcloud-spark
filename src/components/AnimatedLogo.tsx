@@ -33,7 +33,7 @@ const AnimatedLogo = ({ className = "" }: AnimatedLogoProps) => {
         <Music className="h-6 w-6 text-soundcloud" />
       </div>
       <span className="ml-2 font-display font-bold text-xl tracking-tight">
-        TipTune
+        TipCloud
         <span className="text-soundcloud">.</span>
       </span>
     </div>
