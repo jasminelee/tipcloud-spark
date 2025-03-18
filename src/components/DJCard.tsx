@@ -1,110 +1,105 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Headphones, Heart } from 'lucide-react';
+import { Users, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface DJCardProps {
-  dj: {
-    id: string;
-    name: string;
-    genre: string;
-    bio: string;
-    soundcloud_url: string;
-    image_url?: string;
-    followers?: number;
-    created_at: string;
-  };
+  id: string;
+  name: string;
+  imageUrl: string;
+  followers: number;
+  genre: string;
+  featured?: boolean;
 }
 
-const DJCard: React.FC<DJCardProps> = ({ dj }) => {
-  // Truncate bio if it's too long
-  const truncateBio = (text: string, maxLength: number = 100) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-  };
-
-  // Format the "joined" date
-  const formatJoinDate = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch (error) {
-      return 'recently';
+const DJCard = ({ id, name, imageUrl, followers, genre, featured = false }: DJCardProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const formattedFollowers = followers >= 1000 
+    ? `${(followers / 1000).toFixed(1)}K` 
+    : followers.toString();
+    
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `Check out ${name} on TipTune`,
+        text: `Support ${name}, a talented DJ on TipTune!`,
+        url: `${window.location.origin}/dj/${id}`,
+      }).catch(error => console.log('Error sharing', error));
+    } else {
+      navigator.clipboard.writeText(`${window.location.origin}/dj/${id}`);
+      toast.success("Link copied to clipboard!");
     }
   };
-
-  // Default image if none is provided
-  const defaultImage = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop";
-
+  
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-      <div className="relative h-48 bg-gradient-to-r from-gray-100 to-gray-200 overflow-hidden">
-        <img 
-          src={dj.image_url || defaultImage} 
-          alt={dj.name}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-          onError={(e) => {
-            // Fallback if image fails to load
-            e.currentTarget.src = defaultImage;
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <div className="absolute bottom-3 left-4 right-4 flex justify-between items-end">
-          <div>
-            <h3 className="text-white font-bold text-xl">{dj.name}</h3>
-            <span className="text-white/80 text-sm">{dj.genre}</span>
-          </div>
-          <div className="flex items-center gap-1 bg-black/40 text-white rounded-full px-2 py-1">
-            <Headphones size={14} />
-            <span className="text-xs font-medium">{dj.followers?.toLocaleString() || '0'}</span>
-          </div>
+    <Link to={`/dj/${id}`}>
+      <div 
+        className={`group relative overflow-hidden rounded-2xl shadow-medium transition-all duration-500 ease-out
+          ${featured ? 'aspect-[3/4]' : 'aspect-square'} card-hover
+          hover:shadow-glow`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Background Image */}
+        <div className="absolute inset-0 bg-gray-200 overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt={name}
+            className={`w-full h-full object-cover transition-transform duration-700 ease-out
+              ${isHovered ? 'scale-110' : 'scale-100'}`}
+          />
         </div>
-      </div>
-      
-      <div className="p-4">
-        <p className="text-muted-foreground text-sm mb-4">
-          {truncateBio(dj.bio)}
-        </p>
         
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">
-            Joined {formatJoinDate(dj.created_at)}
-          </span>
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80" />
+        
+        {/* Badge for Featured DJs */}
+        {featured && (
+          <div className="absolute top-4 left-4 bg-soundcloud/90 text-white text-xs font-medium px-3 py-1 rounded-full">
+            Featured
+          </div>
+        )}
+        
+        {/* Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          <div className="flex items-center mb-2">
+            <Users size={16} className="mr-1" />
+            <span className="text-xs">{formattedFollowers} followers</span>
+            <span className="mx-2 text-white/40">•</span>
+            <span className="text-xs">{genre}</span>
+          </div>
+          <h3 className="font-display font-bold text-xl mb-3 tracking-tight">
+            {name}
+          </h3>
           
-          <div className="flex gap-2">
-            <a 
-              href={dj.soundcloud_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-soundcloud hover:text-soundcloud-dark"
-            >
-              <ExternalLink size={18} />
-            </a>
+          <div className="flex items-center justify-between">
             <Button 
-              variant="ghost" 
-              size="icon" 
-              className="hover:text-red-500 h-8 w-8 p-0"
+              className="text-white bg-soundcloud hover:bg-soundcloud-light rounded-full px-4 py-1 h-9
+                transition-all duration-300 ease-out transform group-hover:translate-y-0"
             >
-              <Heart size={18} />
+              Tip DJ
             </Button>
+            
+            <div className="flex space-x-2">
+              <button className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
+                <Heart size={16} className="text-white" />
+              </button>
+              <button 
+                onClick={handleShare}
+                className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+              >
+                <Share2 size={16} className="text-white" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      
-      <div className="p-4 pt-0 flex">
-        <Link 
-          to={`/dj/${dj.id}`} 
-          className="w-full"
-        >
-          <Button 
-            variant="outline" 
-            className="w-full hover:bg-soundcloud hover:text-white hover:border-soundcloud"
-          >
-            View Profile
-          </Button>
-        </Link>
-      </div>
-    </div>
+    </Link>
   );
 };
 

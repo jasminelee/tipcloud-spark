@@ -6,55 +6,35 @@ import { supabase } from "@/integrations/supabase/client";
 import DJCard from './DJCard';
 import { Button } from './ui/button';
 
-// Mock data for featured DJs
+// Mock data for featured DJs - using the updated format
 const MOCK_FEATURED_DJS = [
   {
     id: "mock-1",
-    name: "John Summitemu",
+    name: "Melodic Master",
     genre: "House",
-    bio: "Bringing the best house beats from NYC to the world. Over 10 years of experience making crowds dance.",
-    soundcloud_url: "https://soundcloud.com/dj-rhythmic",
-    wallet_address: "bc1q9h5yx4nv8heqkahmzz2jmkxvs0f3m7x2z9v7rr",
-    image_url: "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?q=80&w=2070&auto=format&fit=crop",
-    followers: 4200,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    image_url: "https://images.unsplash.com/photo-1571741140674-8949ca7df2a7?q=80&w=1000&auto=format&fit=crop",
+    followers: 42500,
   },
   {
     id: "mock-2",
-    name: "Not Drake",
-    genre: "Hip Hop",
-    bio: "Turntablist and producer specializing in hip hop and R&B mixes. Featured on major radio stations across the country.",
-    soundcloud_url: "https://soundcloud.com/mixmaster-flow",
-    wallet_address: "bc1q8c6t7v3s4r5e6f7g8h9j0k1l2m3n4o5p6q7r8s",
-    image_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=2074&auto=format&fit=crop",
-    followers: 2800,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    name: "Beat Virtuoso",
+    genre: "EDM",
+    image_url: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?q=80&w=1000&auto=format&fit=crop",
+    followers: 31200,
   },
   {
     id: "mock-3",
-    name: "Deadmau50PercentOff",
+    name: "Rhythm Alchemist",
     genre: "Techno",
-    bio: "Berlin-based techno producer pushing the boundaries of electronic music. Performing at major festivals worldwide.",
-    soundcloud_url: "https://soundcloud.com/electra-beats",
-    wallet_address: "bc1q2w3e4r5t6y7u8i9o0p1a2s3d4f5g6h7j8k9l0",
-    image_url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?q=80&w=2070&auto=format&fit=crop",
-    followers: 5600,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    image_url: "https://images.unsplash.com/photo-1516873240891-4bf014598ab4?q=80&w=1000&auto=format&fit=crop",
+    followers: 28900,
   },
   {
     id: "mock-4",
-    name: "Melody Maker",
+    name: "Sonic Wave",
     genre: "Trance",
-    bio: "Creating uplifting trance music that takes listeners on a journey. Regular appearances at clubs across Europe and Asia.",
-    soundcloud_url: "https://soundcloud.com/melody-maker",
-    wallet_address: "bc1qa2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0",
-    image_url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop",
-    followers: 3900,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    image_url: "https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1000&auto=format&fit=crop",
+    followers: 35600,
   }
 ];
 
@@ -105,13 +85,13 @@ interface DJ {
   id: string;
   name: string;
   genre: string;
-  bio: string;
-  soundcloud_url: string;
-  wallet_address: string;
   image_url?: string;
   followers?: number;
-  created_at: string;
-  updated_at: string;
+  bio?: string;
+  soundcloud_url?: string;
+  wallet_address?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const FeaturedDJs = () => {
@@ -138,11 +118,11 @@ const FeaturedDJs = () => {
         setFeaturedDjs(data);
       } else {
         console.log('No featured DJs found, using mock data');
-        setFeaturedDjs(MOCK_FEATURED_DJS.slice(0, 4));
+        setFeaturedDjs(MOCK_FEATURED_DJS);
       }
     } catch (error) {
       console.error('Error fetching featured DJs:', error);
-      setFeaturedDjs(MOCK_FEATURED_DJS.slice(0, 4));
+      setFeaturedDjs(MOCK_FEATURED_DJS);
     } finally {
       setLoading(false);
     }
@@ -172,9 +152,9 @@ const FeaturedDJs = () => {
           </div>
           <Link 
             to="/dj/featured" 
-            className="text-soundcloud hover:text-soundcloud-dark font-medium transition-colors flex items-center gap-1"
+            className="text-soundcloud hover:text-soundcloud-dark font-medium transition-colors"
           >
-            View All <ArrowRight size={16} />
+            View All
           </Link>
         </div>
         
@@ -196,7 +176,14 @@ const FeaturedDJs = () => {
                   transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
                 }}
               >
-                <DJCard dj={dj} />
+                <DJCard
+                  id={dj.id}
+                  name={dj.name}
+                  imageUrl={dj.image_url || ""}
+                  followers={dj.followers || 0}
+                  genre={dj.genre}
+                  featured={true}
+                />
               </div>
             ))}
           </div>
