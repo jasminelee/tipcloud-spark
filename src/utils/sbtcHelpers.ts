@@ -63,18 +63,31 @@ export const isSBTCWalletConnected = (): boolean => {
  * @returns Promise with connection status
  */
 export const connectSBTCWallet = async (): Promise<boolean> => {
-  // This is a placeholder for the actual wallet connection logic
-  // In a real implementation, we would prompt the user to connect their wallet
-  
   console.log("Attempting to connect to SBTC wallet...");
   
-  // Simulate connection process
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  if (typeof window === 'undefined' || !window.btc) {
+    console.error("No Bitcoin wallet found. Please install a compatible wallet.");
+    return false;
+  }
   
-  // Mock successful connection
-  console.log("SBTC wallet connected successfully");
-  
-  return true;
+  try {
+    // In a real implementation, this would be the actual wallet connection code
+    // For now, we simulate a successful connection if window.btc exists
+    
+    // Some wallets might require explicit permission or have a connect method
+    if (window.btc.request) {
+      await window.btc.request({ method: 'request_accounts' });
+    }
+    
+    // Wait a bit to simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    console.log("SBTC wallet connected successfully");
+    return true;
+  } catch (error) {
+    console.error("Error connecting to wallet:", error);
+    return false;
+  }
 };
 
 // For TypeScript to recognize the global window.btc object
