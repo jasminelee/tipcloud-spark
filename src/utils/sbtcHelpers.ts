@@ -154,7 +154,6 @@ export const sendSbtcTip = async ({
         Cl.standardPrincipal(senderAddress),
         Cl.standardPrincipal(recipientAddress),
       ],
-      postConditionMode: 'allow'
     });
     
     // Handle callbacks after the request completes
