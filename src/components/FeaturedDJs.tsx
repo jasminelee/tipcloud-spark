@@ -10,7 +10,7 @@ import { Button } from './ui/button';
 const MOCK_FEATURED_DJS = [
   {
     id: "mock-1",
-    name: "DJ Rhythmic",
+    name: "John Summitemu",
     genre: "House",
     bio: "Bringing the best house beats from NYC to the world. Over 10 years of experience making crowds dance.",
     soundcloud_url: "https://soundcloud.com/dj-rhythmic",
@@ -22,7 +22,7 @@ const MOCK_FEATURED_DJS = [
   },
   {
     id: "mock-2",
-    name: "Mixmaster Flow",
+    name: "Not Drake",
     genre: "Hip Hop",
     bio: "Turntablist and producer specializing in hip hop and R&B mixes. Featured on major radio stations across the country.",
     soundcloud_url: "https://soundcloud.com/mixmaster-flow",
@@ -34,7 +34,7 @@ const MOCK_FEATURED_DJS = [
   },
   {
     id: "mock-3",
-    name: "Electra Beats",
+    name: "Deadmau50PercentOff",
     genre: "Techno",
     bio: "Berlin-based techno producer pushing the boundaries of electronic music. Performing at major festivals worldwide.",
     soundcloud_url: "https://soundcloud.com/electra-beats",

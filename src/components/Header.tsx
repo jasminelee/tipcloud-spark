@@ -166,9 +166,9 @@ const Header = () => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'DJs', path: '/dj/featured' },
+    { name: 'Find DJs', path: '/dj/featured' },
     { name: 'About', path: '/about' },
-    { name: 'Become a DJ', path: '/register-dj' },
+    { name: 'Register as DJ', path: '/register-dj' },
   ];
   
   // Display wallet address if connected
