@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Music, Check } from 'lucide-react';
@@ -51,7 +50,7 @@ const RegisterDJ = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow flex items-center justify-center">
+        <main className="flex-grow flex items-center justify-center pt-32">
           <div className="text-center">
             <div className="h-16 w-16 border-4 border-t-soundcloud rounded-full animate-spin mx-auto"></div>
             <p className="mt-4 text-muted-foreground">Loading...</p>
@@ -65,7 +64,7 @@ const RegisterDJ = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow container max-w-4xl mx-auto px-4 py-8">
+      <main className="flex-grow container max-w-4xl mx-auto px-4 py-8 pt-32">
         <div className="mb-10 text-center">
           <h1 className="text-3xl md:text-4xl font-display font-bold mb-4">Register as a SoundCloud DJ</h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
