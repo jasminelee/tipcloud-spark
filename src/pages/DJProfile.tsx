@@ -196,6 +196,11 @@ const DJProfile = () => {
                 <Calendar size={16} className="mr-2" />
                 <span>Joined {formatDate(dj.joinedDate)}</span>
               </div>
+              
+              <div className="flex items-start mt-6 text-sm">
+                <div className="text-muted-foreground mr-2">Wallet:</div>
+                <div className="font-mono text-xs break-all">{dj.wallet_address}</div>
+              </div>
             </div>
             
             <div className="glass p-6 rounded-xl">
@@ -235,12 +240,13 @@ const DJProfile = () => {
                       <p className="text-sm text-muted-foreground">{formatPlays(track.plays)}</p>
                     </div>
                     <Button 
-                      variant="ghost" 
-                      size="icon"
+                      variant="outline" 
+                      size="sm"
                       className="opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => setTipModalOpen(true)}
                     >
-                      <HandCoins size={18} className="text-soundcloud" />
+                      <HandCoins size={16} className="mr-2 text-soundcloud" />
+                      Tip
                     </Button>
                   </div>
                 ))}
@@ -288,11 +294,11 @@ const DJProfile = () => {
       <Footer />
       
       <TipModal
-        open={tipModalOpen}
-        onOpenChange={setTipModalOpen}
+        isOpen={tipModalOpen}
+        onClose={() => setTipModalOpen(false)}
         djName={dj.name}
-        djImageUrl={dj.image_url}
-        djWalletAddress={dj.wallet_address}
+        djProfileImage={dj.image_url}
+        walletAddress={dj.wallet_address}
       />
     </div>
   );

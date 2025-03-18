@@ -1,212 +1,333 @@
-
-import { useState } from 'react';
-import { X, SendHorizonal, HandCoins, ArrowRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { X, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { sendSBTC } from '@/utils/sbtcHelpers';
-import { toast } from 'sonner';
+import { 
+  sendSbtcTip, 
+  satoshisToUSD, 
+  isSBTCWalletConnected, 
+  connectSBTCWallet,
+  getWalletAddress
+} from '@/utils/sbtcHelpers';
+
+// Predefined tip amounts in satoshis
+const PRESET_AMOUNTS = [100, 500, 1000, 5000, 10000];
 
 interface TipModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
   djName: string;
-  djImageUrl: string;
-  djWalletAddress: string;
+  djProfileImage?: string;
+  walletAddress: string;
 }
 
-const TIP_AMOUNTS = [100, 500, 1000, 5000, 10000];
+const TipModal: React.FC<TipModalProps> = ({
+  isOpen,
+  onClose,
+  djName,
+  djProfileImage,
+  walletAddress
+}) => {
+  const [selectedAmount, setSelectedAmount] = useState<number>(1000);
+  const [customAmount, setCustomAmount] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
+  const [isWalletConnected, setIsWalletConnected] = useState<boolean>(false);
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [step, setStep] = useState<'amount' | 'confirm'>('amount');
+  const [senderAddress, setSenderAddress] = useState<string | null>(null);
 
-const TipModal = ({ open, onOpenChange, djName, djImageUrl, djWalletAddress }: TipModalProps) => {
-  const [amount, setAmount] = useState(1000);
-  const [customAmount, setCustomAmount] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [step, setStep] = useState(1);
-  
-  const handleAmountSelect = (selectedAmount: number) => {
-    setAmount(selectedAmount);
-    setCustomAmount("");
+  // Determine the actual amount to use (selected or custom)
+  const actualAmount = customAmount 
+    ? parseInt(customAmount.replace(/[^0-9]/g, ''), 10) || 0 
+    : selectedAmount;
+
+  // Check wallet connection when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      checkWalletConnection();
+    }
+  }, [isOpen]);
+
+  // Check if wallet is connected
+  const checkWalletConnection = async () => {
+    try {
+      const connected = await isSBTCWalletConnected();
+      setIsWalletConnected(connected);
+      
+      if (connected) {
+        const address = await getWalletAddress();
+        setSenderAddress(address);
+      }
+    } catch (error) {
+      console.error('Error checking wallet connection:', error);
+      setIsWalletConnected(false);
+    }
   };
-  
+
+  // Connect to wallet
+  const connectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      const result = await connectSBTCWallet();
+      setIsWalletConnected(result.connected);
+      
+      if (result.connected && result.addresses) {
+        const stacksAddress = result.addresses.find(addr => addr.symbol === 'STX')?.address;
+        if (stacksAddress) {
+          setSenderAddress(stacksAddress);
+        }
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      toast.error('Failed to connect wallet', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Continue to confirmation step
+  const handleContinue = () => {
+    if (!actualAmount || actualAmount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+    setStep('confirm');
+  };
+
+  // Go back to amount selection
+  const handleBack = () => {
+    setStep('amount');
+  };
+
+  // Send the tip
+  const handleSendTip = async () => {
+    if (!walletAddress || !isWalletConnected) {
+      toast.error('Cannot send tip', {
+        description: 'Wallet not connected or recipient address is missing'
+      });
+      return;
+    }
+
+    if (!actualAmount || actualAmount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await sendSbtcTip({
+        recipientAddress: walletAddress,
+        satoshiAmount: actualAmount,
+        onFinish: (data) => {
+          toast.success('Tip sent successfully!', {
+            description: `You've sent ${actualAmount.toLocaleString()} sats to ${djName}`
+          });
+          onClose();
+        },
+        onCancel: () => {
+          toast.info('Transaction cancelled');
+          setIsSending(false);
+        }
+      });
+    } catch (error) {
+      console.error('Error sending tip:', error);
+      toast.error('Failed to send tip', {
+        description: error instanceof Error ? error.message : 'Unknown error occurred'
+      });
+      setIsSending(false);
+    }
+  };
+
+  // Handle custom amount input
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setCustomAmount(value);
-    if (value) {
-      setAmount(parseInt(value));
+    // Only allow numbers
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setCustomAmount(numericValue);
+    // When using custom amount, deselect preset amounts
+    if (numericValue) {
+      setSelectedAmount(0);
     } else {
-      setAmount(0);
+      setSelectedAmount(1000); // Default back to 1000 sats
     }
   };
-  
-  const handleSliderChange = (value: number[]) => {
-    setAmount(value[0]);
-    setCustomAmount(value[0].toString());
-  };
-  
-  const handleSendTip = async () => {
-    try {
-      setIsSending(true);
-      
-      // Send tip using SBTC through the helper function
-      await sendSBTC(djWalletAddress, amount, message);
-      
-      toast.success(`Successfully tipped ${djName} ${amount} sats!`);
-      setIsSending(false);
-      onOpenChange(false);
-      // Reset form state
-      setAmount(1000);
-      setCustomAmount("");
-      setMessage("");
-      setStep(1);
-    } catch (error) {
-      console.error("Error sending tip:", error);
-      toast.error("Failed to send tip. Please try again.");
-      setIsSending(false);
-    }
-  };
-  
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden">
-        <div className="bg-soundcloud h-2" />
-        
-        <DialogHeader className="p-6 pb-2">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-display">
-              {step === 1 ? "Support Your Favorite DJ" : "Confirm Your Tip"}
-            </DialogTitle>
-            <button 
-              onClick={() => onOpenChange(false)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </DialogHeader>
-        
-        {step === 1 ? (
-          <div className="p-6 pt-2">
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex-shrink-0">
-                <img 
-                  src={djImageUrl} 
-                  alt={djName} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="ml-3">
-                <div className="text-sm text-muted-foreground">You're tipping</div>
-                <div className="font-medium">{djName}</div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="amount" className="text-sm font-medium">
-                  Select Amount (sats)
-                </Label>
-                <div className="grid grid-cols-5 gap-2 mt-2">
-                  {TIP_AMOUNTS.map((tipAmount) => (
-                    <button
-                      key={tipAmount}
-                      type="button"
-                      className={`py-2 px-3 rounded-lg border text-sm font-medium transition-all
-                        ${amount === tipAmount && !customAmount 
-                          ? 'bg-soundcloud text-white border-soundcloud' 
-                          : 'bg-muted border-border hover:border-soundcloud/50'}`}
-                      onClick={() => handleAmountSelect(tipAmount)}
-                    >
-                      {tipAmount}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="custom-amount" className="text-sm font-medium">
-                  Custom Amount
-                </Label>
-                <Input
-                  id="custom-amount"
-                  type="number"
-                  placeholder="Enter amount in sats"
-                  value={customAmount}
-                  onChange={handleCustomAmountChange}
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <div className="flex justify-between mb-2">
-                  <Label htmlFor="slider" className="text-sm font-medium">
-                    Adjust Amount
-                  </Label>
-                  <span className="text-soundcloud font-medium text-sm">
-                    {amount} sats
-                  </span>
-                </div>
-                <Slider
-                  id="slider"
-                  defaultValue={[1000]}
-                  max={50000}
-                  min={100}
-                  step={100}
-                  value={[amount]}
-                  onValueChange={handleSliderChange}
-                  className="my-4"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="message" className="text-sm font-medium">
-                  Message (Optional)
-                </Label>
-                <Input
-                  id="message"
-                  placeholder="Add a message of support..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Support Your Favorite DJ</span>
             <Button 
-              className="w-full mt-6 bg-soundcloud hover:bg-soundcloud-dark text-white"
-              size="lg"
-              onClick={() => setStep(2)}
-              disabled={amount <= 0}
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6 rounded-full" 
+              onClick={onClose}
             >
-              Continue
-              <ArrowRight size={16} className="ml-2" />
+              <X size={18} />
             </Button>
-          </div>
-        ) : (
-          <div className="p-6 pt-2">
-            <div className="bg-muted/50 rounded-xl p-4 mb-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-muted-foreground">Amount</span>
-                <span className="font-medium">{amount} sats</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Recipient</span>
-                <span className="font-medium">{djName}</span>
-              </div>
-              {message && (
-                <div className="mt-3 pt-3 border-t border-border">
-                  <span className="text-sm text-muted-foreground block mb-1">Your message:</span>
-                  <span className="text-sm italic">"{message}"</span>
+          </DialogTitle>
+          <DialogDescription className="flex items-center gap-3 pt-2">
+            <div className="rounded-full overflow-hidden h-12 w-12 bg-secondary flex-shrink-0">
+              {djProfileImage ? (
+                <img 
+                  src={djProfileImage} 
+                  alt={djName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground">
+                  DJ
                 </div>
               )}
             </div>
-            
-            <div className="flex justify-between mb-6">
+            <div>
+              <div className="font-medium">You're tipping</div>
+              <div className="text-soundcloud">{djName}</div>
+            </div>
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === 'amount' ? (
+          <>
+            <div className="space-y-4 py-2">
+              <div>
+                <Label>Select Amount (sats)</Label>
+                <div className="grid grid-cols-5 gap-2 mt-2">
+                  {PRESET_AMOUNTS.map((amount) => (
+                    <Button
+                      key={amount}
+                      type="button"
+                      variant={selectedAmount === amount ? "default" : "outline"}
+                      className={`${
+                        selectedAmount === amount ? 'bg-soundcloud text-white' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedAmount(amount);
+                        setCustomAmount('');
+                      }}
+                    >
+                      {amount}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>Custom Amount</Label>
+                <Input
+                  type="text"
+                  placeholder="Enter amount in sats"
+                  value={customAmount}
+                  onChange={handleCustomAmountChange}
+                  className="mt-2"
+                />
+                {actualAmount > 0 && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Approximately {satoshisToUSD(actualAmount)}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label>Message (Optional)</Label>
+                <Textarea 
+                  placeholder="Add a message of support..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="mt-2 min-h-[80px]"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="mt-4">
+              {isWalletConnected ? (
+                <Button 
+                  className="w-full bg-soundcloud hover:bg-soundcloud-dark text-white"
+                  disabled={!actualAmount || actualAmount <= 0}
+                  onClick={handleContinue}
+                >
+                  Continue
+                  <ArrowRight size={16} className="ml-2" />
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full"
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting Wallet...
+                    </>
+                  ) : (
+                    'Connect Wallet'
+                  )}
+                </Button>
+              )}
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <div className="space-y-4 py-2">
+              <div className="rounded-lg border p-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-medium">{actualAmount.toLocaleString()} sats</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Approx. USD</span>
+                  <span>{satoshisToUSD(actualAmount)}</span>
+                </div>
+              </div>
+
+              {message && (
+                <div className="rounded-lg border p-4">
+                  <div className="text-muted-foreground mb-1">Your message</div>
+                  <div className="text-sm">{message}</div>
+                </div>
+              )}
+
+              {senderAddress && (
+                <div className="rounded-lg border p-4">
+                  <div className="text-muted-foreground mb-1">From</div>
+                  <div className="text-sm truncate">{senderAddress}</div>
+                </div>
+              )}
+
+              <div className="rounded-lg border p-4">
+                <div className="text-muted-foreground mb-1">To</div>
+                <div className="text-sm truncate">{walletAddress}</div>
+              </div>
+
+              <div className="bg-amber-50 rounded-lg p-3 flex items-start gap-2">
+                <AlertCircle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-amber-800">
+                  You're about to send a tip using sBTC. This will open your wallet to confirm the transaction.
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="space-x-2 mt-4">
               <Button 
                 variant="outline" 
-                onClick={() => setStep(1)}
+                onClick={handleBack}
+                disabled={isSending}
               >
                 Back
               </Button>
@@ -216,22 +337,16 @@ const TipModal = ({ open, onOpenChange, djName, djImageUrl, djWalletAddress }: T
                 disabled={isSending}
               >
                 {isSending ? (
-                  <span className="flex items-center">
-                    <span className="animate-pulse mr-2">Processing...</span>
-                  </span>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
                 ) : (
-                  <span className="flex items-center">
-                    <HandCoins size={16} className="mr-2" />
-                    Send Tip
-                  </span>
+                  'Send Tip'
                 )}
               </Button>
-            </div>
-            
-            <p className="text-xs text-muted-foreground text-center">
-              By continuing, you'll be sending {amount} sats using SBTC to support {djName}.
-            </p>
-          </div>
+            </DialogFooter>
+          </>
         )}
       </DialogContent>
     </Dialog>

@@ -1,221 +1,174 @@
-type SBTCResponse = {
-  success: boolean;
-  txid?: string;
-  error?: string;
-};
+import { 
+  openSTXTransfer,
+  openContractCall,
+  UserSession,
+  AppConfig,
+  showConnect
+} from '@stacks/connect';
+import {
+  FungibleConditionCode,
+  PostConditionMode
+} from '@stacks/transactions';
+import { 
+  StacksNetwork,
+  STACKS_MAINNET,
+  STACKS_TESTNET
+} from '@stacks/network';
+
+// Constants
+const SBTC_CONTRACT_ADDRESS = 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR';
+const SBTC_CONTRACT_NAME = 'wrapped-bitcoin';
+const SBTC_ASSET_NAME = 'wrapped-bitcoin';
+const SBTC_EXPLORER_URL = 'https://explorer.stacks.co/txid';
+const SATOSHIS_PER_BTC = 100000000;
+
+// Network configuration - use testnet for development, change to mainnet for production
+const network = STACKS_TESTNET;
+
+// AppConfig for Stacks Connect
+const appConfig = new AppConfig(['store_write']);
+
+// Initialize the userSession
+const userSession = new UserSession({ appConfig });
 
 /**
- * Send SBTC to a recipient wallet
- * @param recipientAddress - The wallet address to send SBTC to
- * @param amountSats - Amount in satoshis to send
- * @param memo - Optional memo/message to include
- * @returns Promise with transaction response
+ * Convert satoshis to sBTC (1 BTC = 100,000,000 satoshis)
  */
-export const sendSBTC = async (
-  recipientAddress: string,
-  amountSats: number,
-  memo: string = ""
-): Promise<SBTCResponse> => {
-  console.log(`Sending ${amountSats} sats to ${recipientAddress} with memo: ${memo}`);
-  
-  // Check if we're in a browser environment with window.btc
-  if (typeof window === 'undefined' || !window.btc) {
-    throw new Error("Bitcoin wallet not available. Please install a compatible wallet extension.");
-  }
-  
-  try {
-    // This is a placeholder for the actual SBTC implementation
-    // In a real implementation, we would call the SBTC API or library
-    
-    // Mocking the actual wallet connection
-    // In production, you'd connect to the actual SBTC wallet API
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating network call
-    
-    const response: SBTCResponse = {
-      success: true,
-      txid: `tx_${Math.random().toString(36).substring(2, 15)}`
-    };
-    
-    console.log("Transaction successful:", response);
-    
-    return response;
-  } catch (error) {
-    console.error("Error sending SBTC:", error);
-    
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error occurred"
-    };
-  }
+export const satoshisToSBTC = (satoshis: number): number => {
+  return satoshis / SATOSHIS_PER_BTC;
 };
 
 /**
- * Check if SBTC wallet is connected without triggering wallet UI
- * @returns Boolean indicating if wallet is connected
+ * Convert sBTC to satoshis
+ */
+export const sBTCToSatoshis = (sbtc: number): number => {
+  return sbtc * SATOSHIS_PER_BTC;
+};
+
+/**
+ * Format satoshis for display
+ */
+export const formatSatoshis = (satoshis: number): string => {
+  // Format large numbers with commas
+  return satoshis.toLocaleString();
+};
+
+/**
+ * Calculate the approximate USD value of satoshis
+ * This is a simplified version - in production, you would use a price API
+ */
+export const satoshisToUSD = (satoshis: number): string => {
+  // This is just an example price - in production, fetch the current BTC price
+  const btcPrice = 65000; // Example BTC price in USD
+  const sbtcValue = satoshisToSBTC(satoshis);
+  const usdValue = sbtcValue * btcPrice;
+  
+  // Format USD amount
+  return usdValue < 1 
+    ? `$${usdValue.toFixed(2)}` 
+    : `$${usdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+/**
+ * Connect to the SBTC wallet
+ */
+export const connectSBTCWallet = async () => {
+  return new Promise<{connected: boolean, addresses?: {symbol: string, address: string}[]}>((resolve) => {
+    showConnect({
+      appDetails: {
+        name: 'TipTune',
+        icon: window.location.origin + '/logo.png',
+      },
+      redirectTo: '/',
+      onFinish: (data) => {
+        // Handle the data properly, as it doesn't have an 'addresses' property directly
+        const userData = userSession.loadUserData();
+        resolve({
+          connected: true,
+          addresses: [
+            {
+              symbol: 'STX',
+              address: userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet
+            }
+          ]
+        });
+      },
+      onCancel: () => {
+        resolve({
+          connected: false
+        });
+      },
+      userSession
+    });
+  });
+};
+
+/**
+ * Check if wallet is connected
  */
 export const isSBTCWalletConnected = async (): Promise<boolean> => {
-  // Check for window.btc existence
-  if (typeof window === 'undefined') {
-    console.log("Not in browser environment");
-    return false;
-  }
-  
-  // Check for LeatherProvider first (new recommended API)
-  if (window.LeatherProvider) {
-    try {
-      console.log("Checking LeatherProvider connection status");
-      
-      // Only use truly passive checks that won't trigger UI
-      // Try with passive property checks first
-      if (window.LeatherProvider.isConnected) {
-        return true;
-      }
-      
-      // Don't attempt to call request methods here as they might trigger UI
-      // Instead rely on component-level handling after explicit user action
-      
-      return false;
-    } catch (error) {
-      console.error("Error checking LeatherProvider connection:", error);
-      return false;
-    }
-  }
-  
-  // Fallback to check for window.btc
-  if (window.btc) {
-    try {
-      // Only check properties that don't trigger UI
-      
-      // Check for passive connection indicators
-      if (window.btc.address || window.btc.accounts) {
-        return true;
-      }
-      
-      // This is a passive check for other wallet types
-      if (window.btc.isConnected || (window.btc.status && window.btc.status === 'connected')) {
-        return true; 
-      }
-      
-      console.log("Wallet detected but no passive connection indicators found");
-      return false;
-    } catch (error) {
-      console.error("Error checking wallet connection:", error);
-      return false;
-    }
-  }
-  
-  console.log("No Bitcoin wallet detected");
-  return false;
+  return userSession.isUserSignedIn();
 };
 
 /**
- * Connect to SBTC wallet - explicitly triggers wallet UI
- * IMPORTANT: This should ONLY be called from explicit user actions
- * like clicking a "Connect Wallet" button
- * @returns Promise with connection status and addresses if available
+ * Get wallet address
  */
-export const connectSBTCWallet = async (): Promise<{
-  connected: boolean;
-  addresses?: Array<{
-    symbol: string;
-    type?: string;
-    address: string;
-    publicKey?: string;
-    derivationPath?: string;
-  }>;
-}> => {
-  console.log("Attempting to connect to SBTC wallet...");
-  
-  // Use LeatherProvider as recommended in the deprecation warning
-  if (typeof window !== 'undefined' && window.LeatherProvider) {
-    try {
-      console.log("Using LeatherProvider");
-      
-      // First check if we're already connected without triggering UI
-      try {
-        // Try a passive check first to avoid multiple popups
-        if (window.LeatherProvider.isConnected) {
-          console.log("Leather wallet already connected via isConnected property");
-          return { connected: true };
-        }
-      } catch (e) {
-        console.log("Error checking passive connection:", e);
-      }
-      
-      // Request addresses using the correct method - will trigger UI once
-      const response = await window.LeatherProvider.request("getAddresses");
-      console.log("Leather wallet response:", response);
-      
-      // Check if we have a valid response with addresses
-      if (response && response.result && response.result.addresses &&
-          Array.isArray(response.result.addresses) && response.result.addresses.length > 0) {
-        console.log("Leather wallet connection successful");
-        // Return both connection status and addresses to avoid additional requests
-        return { 
-          connected: true,
-          addresses: response.result.addresses
-        };
-      }
-      
-      return { connected: false };
-    } catch (error) {
-      console.error("Error connecting to Leather wallet:", error);
-      return { connected: false };
-    }
+export const getWalletAddress = async (): Promise<string | null> => {
+  if (!userSession.isUserSignedIn()) {
+    return null;
   }
-  
-  // Fallback to old method for other wallets
-  if (typeof window !== 'undefined' && window.btc) {
-    try {
-      console.log("Falling back to window.btc");
-      
-      // For non-Leather wallets
-      if (window.btc.request) {
-        try {
-          await window.btc.request({ method: 'getAccounts' });
-          return { connected: true }; // If we got here without error, we're connected
-        } catch (e) {
-          console.error("Failed getAccounts", e);
-          return { connected: false };
-        }
-      }
-      
-      // If no request method, check for other indicators
-      if (window.btc.address || window.btc.accounts || 
-          window.btc.isConnected || (window.btc.status && window.btc.status === 'connected')) {
-        return { connected: true };
-      }
-      
-      return { connected: false };
-    } catch (error) {
-      console.error("Error connecting to wallet:", error);
-      return { connected: false };
-    }
-  }
-  
-  console.error("No Bitcoin wallet found. Please install a compatible wallet.");
-  return { connected: false };
+  const userData = userSession.loadUserData();
+  return userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
 };
 
-// For TypeScript to recognize the global window objects
-declare global {
-  interface Window {
-    btc?: any;
-    LeatherProvider?: {
-      request: (method: string, params?: any) => Promise<any>;
-      isConnected?: boolean;
-      ready?: boolean;
-      getAddresses?: () => Promise<{
-        result: {
-          addresses: Array<{
-            symbol: string;
-            type?: string;
-            address: string;
-            publicKey?: string;
-            derivationPath?: string;
-          }>
-        }
-      }>;
-    };
-  }
+/**
+ * Send sBTC tip to a recipient
+ */
+export interface SendSbtcTipOptions {
+  recipientAddress: string;
+  satoshiAmount: number;
+  onFinish?: (data: any) => void;
+  onCancel?: () => void;
 }
+
+export const sendSbtcTip = async ({
+  recipientAddress,
+  satoshiAmount,
+  onFinish,
+  onCancel
+}: SendSbtcTipOptions) => {
+  try {
+    if (!userSession.isUserSignedIn()) {
+      throw new Error('User not signed in');
+    }
+
+    // For simplicity, using STX for tips as an example
+    // In a real implementation, you would use the sBTC token contract
+    openSTXTransfer({
+      recipient: recipientAddress,
+      amount: satoshiAmount.toString(), // Convert to string as required by the API
+      memo: 'Tip from TipTune',
+      network,
+      appDetails: {
+        name: 'TipTune',
+        icon: window.location.origin + '/logo.png',
+      },
+      onFinish: (data) => {
+        if (onFinish) onFinish(data);
+      },
+      onCancel: () => {
+        if (onCancel) onCancel();
+      },
+    });
+    } catch (error) {
+    console.error('Error sending sBTC tip:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get transaction explorer URL
+ */
+export const getTransactionExplorerUrl = (txId: string): string => {
+  return `${SBTC_EXPLORER_URL}/${txId}?chain=mainnet`;
+};

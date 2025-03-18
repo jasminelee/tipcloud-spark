@@ -217,19 +217,19 @@ const FeaturedDJs = () => {
           </div>
         ) : (
           <div className={`transform transition-opacity duration-1000 ${
-            isVisible ? 'opacity-100' : 'opacity-0'
-          }`}>
+          isVisible ? 'opacity-100' : 'opacity-0'
+        }`}>
             {/* First row - first 4 DJs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
               {featuredDjs.slice(0, 4).map((dj, index) => (
-                <div 
-                  key={dj.id} 
-                  className="transform transition-all duration-700 ease-out"
-                  style={{ 
-                    transitionDelay: `${index * 100}ms`,
-                    transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
-                  }}
-                >
+            <div 
+              key={dj.id} 
+              className="transform transition-all duration-700 ease-out"
+              style={{ 
+                transitionDelay: `${index * 100}ms`,
+                transform: isVisible ? 'translateY(0)' : 'translateY(20px)'
+              }}
+            >
                   <DJCard dj={dj} />
                 </div>
               ))}
@@ -248,8 +248,8 @@ const FeaturedDJs = () => {
                     }}
                   >
                     <DJCard dj={dj} />
-                  </div>
-                ))}
+            </div>
+          ))}
               </div>
             )}
           </div>
