@@ -43,27 +43,22 @@ const HeroSection = () => {
       // Check if Leather wallet is installed
       if (window.LeatherProvider) {
         try {
-          const connected = await connectSBTCWallet();
+          const result = await connectSBTCWallet();
           
-          if (connected) {
+          if (result.connected) {
             setIsWalletConnected(true);
             toast.success("Leather wallet connected successfully!");
             
-            // Get the user's Stacks address and abbreviate it
-            try {
-              const response = await window.LeatherProvider.request("getAddresses");
-              if (response?.result?.addresses) {
-                const stacksAddress = response.result.addresses.find(addr => addr.symbol === "STX")?.address;
-                if (stacksAddress) {
-                  setUserAddress(stacksAddress);
-                }
+            // Use addresses from the connection result if available
+            if (result.addresses) {
+              const stacksAddress = result.addresses.find(addr => addr.symbol === "STX")?.address;
+              if (stacksAddress) {
+                setUserAddress(stacksAddress);
               }
-            } catch (addressError) {
-              console.error("Error fetching wallet addresses:", addressError);
             }
           } else {
             toast.error("Failed to connect Leather wallet", {
-              description: "Please try again or check if Leather wallet is properly set up"
+              description: "Connection was rejected or failed. Please try again."
             });
           }
         } catch (error) {
@@ -80,14 +75,14 @@ const HeroSection = () => {
       // Check for other wallet types
       if (window.btc) {
         try {
-          const connected = await connectSBTCWallet();
+          const result = await connectSBTCWallet();
           
-          if (connected) {
+          if (result.connected) {
             setIsWalletConnected(true);
             toast.success("Wallet connected successfully!");
           } else {
             toast.error("Failed to connect wallet", {
-              description: "Please try again or use a different wallet"
+              description: "Connection was rejected or failed. Please try again."
             });
           }
         } catch (error) {

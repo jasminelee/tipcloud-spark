@@ -65,22 +65,16 @@ export const isSBTCWalletConnected = async (): Promise<boolean> => {
     try {
       console.log("Checking LeatherProvider connection status");
       
+      // Only use truly passive checks that won't trigger UI
       // Try with passive property checks first
       if (window.LeatherProvider.isConnected) {
         return true;
       }
       
-      // As a fallback, try to get addresses without triggering UI
-      try {
-        // This checks if we're already connected
-        const response = await window.LeatherProvider.request("getAddresses");
-        return !!(response && response.result && response.result.addresses && 
-          Array.isArray(response.result.addresses) && response.result.addresses.length > 0);
-      } catch (e) {
-        // If this errors, the wallet is likely not connected
-        console.log("Error getting addresses from Leather:", e);
-        return false;
-      }
+      // Don't attempt to call request methods here as they might trigger UI
+      // Instead rely on component-level handling after explicit user action
+      
+      return false;
     } catch (error) {
       console.error("Error checking LeatherProvider connection:", error);
       return false;
@@ -118,9 +112,18 @@ export const isSBTCWalletConnected = async (): Promise<boolean> => {
  * Connect to SBTC wallet - explicitly triggers wallet UI
  * IMPORTANT: This should ONLY be called from explicit user actions
  * like clicking a "Connect Wallet" button
- * @returns Promise with connection status
+ * @returns Promise with connection status and addresses if available
  */
-export const connectSBTCWallet = async (): Promise<boolean> => {
+export const connectSBTCWallet = async (): Promise<{
+  connected: boolean;
+  addresses?: Array<{
+    symbol: string;
+    type?: string;
+    address: string;
+    publicKey?: string;
+    derivationPath?: string;
+  }>;
+}> => {
   console.log("Attempting to connect to SBTC wallet...");
   
   // Use LeatherProvider as recommended in the deprecation warning
@@ -128,7 +131,18 @@ export const connectSBTCWallet = async (): Promise<boolean> => {
     try {
       console.log("Using LeatherProvider");
       
-      // Request addresses using the correct method
+      // First check if we're already connected without triggering UI
+      try {
+        // Try a passive check first to avoid multiple popups
+        if (window.LeatherProvider.isConnected) {
+          console.log("Leather wallet already connected via isConnected property");
+          return { connected: true };
+        }
+      } catch (e) {
+        console.log("Error checking passive connection:", e);
+      }
+      
+      // Request addresses using the correct method - will trigger UI once
       const response = await window.LeatherProvider.request("getAddresses");
       console.log("Leather wallet response:", response);
       
@@ -136,16 +150,17 @@ export const connectSBTCWallet = async (): Promise<boolean> => {
       if (response && response.result && response.result.addresses &&
           Array.isArray(response.result.addresses) && response.result.addresses.length > 0) {
         console.log("Leather wallet connection successful");
-        return true;
+        // Return both connection status and addresses to avoid additional requests
+        return { 
+          connected: true,
+          addresses: response.result.addresses
+        };
       }
       
-      // Verify connection after attempting to connect
-      const isConnected = await isSBTCWalletConnected();
-      console.log(`Leather wallet connection verification: ${isConnected ? 'successful' : 'failed'}`);
-      return isConnected;
+      return { connected: false };
     } catch (error) {
       console.error("Error connecting to Leather wallet:", error);
-      return false;
+      return { connected: false };
     }
   }
   
@@ -158,25 +173,28 @@ export const connectSBTCWallet = async (): Promise<boolean> => {
       if (window.btc.request) {
         try {
           await window.btc.request({ method: 'getAccounts' });
+          return { connected: true }; // If we got here without error, we're connected
         } catch (e) {
           console.error("Failed getAccounts", e);
-          return false;
+          return { connected: false };
         }
       }
       
-      // Verify connection after attempting to connect
-      const isConnected = await isSBTCWalletConnected();
+      // If no request method, check for other indicators
+      if (window.btc.address || window.btc.accounts || 
+          window.btc.isConnected || (window.btc.status && window.btc.status === 'connected')) {
+        return { connected: true };
+      }
       
-      console.log(`SBTC wallet connection ${isConnected ? 'successful' : 'failed'}`);
-      return isConnected;
+      return { connected: false };
     } catch (error) {
       console.error("Error connecting to wallet:", error);
-      return false;
+      return { connected: false };
     }
   }
   
   console.error("No Bitcoin wallet found. Please install a compatible wallet.");
-  return false;
+  return { connected: false };
 };
 
 // For TypeScript to recognize the global window objects
