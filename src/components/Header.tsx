@@ -2,12 +2,16 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import AnimatedLogo from '@/components/AnimatedLogo';
+import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
   const location = useLocation();
   
   useEffect(() => {
@@ -16,12 +20,63 @@ const Header = () => {
     };
     
     window.addEventListener('scroll', handleScroll);
+    
+    // Check wallet connection status without triggering UI
+    const checkWalletConnection = async () => {
+      try {
+        const connected = await isSBTCWalletConnected();
+        setIsWalletConnected(connected);
+      } catch (error) {
+        console.error("Error checking wallet connection:", error);
+      }
+    };
+    
+    checkWalletConnection();
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const handleConnectWallet = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (isWalletConnected) {
+      // If already connected, do nothing
+      return;
+    }
+    
+    setIsConnecting(true);
+    
+    try {
+      if (typeof window === 'undefined' || (!window.btc && !window.LeatherProvider)) {
+        toast.error("No Bitcoin wallet detected", {
+          description: "Please install Leather or another compatible wallet"
+        });
+        return;
+      }
+      
+      const connected = await connectSBTCWallet();
+      
+      if (connected) {
+        setIsWalletConnected(true);
+        toast.success("Wallet connected successfully!");
+      } else {
+        toast.error("Failed to connect wallet", {
+          description: "Please try again or use a different wallet"
+        });
+      }
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      toast.error("Error connecting wallet", {
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -52,12 +107,23 @@ const Header = () => {
                 {link.name}
               </Link>
             ))}
-            <Link to="/connect">
-              <Button className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
-                shadow-md transition-all duration-300 ease-out transform hover:-translate-y-0.5">
-                Connect Wallet
-              </Button>
-            </Link>
+            <Button 
+              className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
+              shadow-md transition-all duration-300 ease-out transform hover:-translate-y-0.5"
+              onClick={handleConnectWallet}
+              disabled={isConnecting || isWalletConnected}
+            >
+              {isConnecting ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                  <span>Connecting...</span>
+                </div>
+              ) : isWalletConnected ? (
+                "Wallet Connected"
+              ) : (
+                "Connect Wallet"
+              )}
+            </Button>
           </nav>
           
           {/* Mobile Menu Button */}
@@ -86,12 +152,23 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
-              <Link to="/connect" className="mt-4">
-                <Button className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
-                  shadow-md transition-all duration-300 ease-out">
-                  Connect Wallet
-                </Button>
-              </Link>
+              <Button 
+                className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
+                shadow-md transition-all duration-300 ease-out"
+                onClick={handleConnectWallet}
+                disabled={isConnecting || isWalletConnected}
+              >
+                {isConnecting ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                    <span>Connecting...</span>
+                  </div>
+                ) : isWalletConnected ? (
+                  "Wallet Connected"
+                ) : (
+                  "Connect Wallet"
+                )}
+              </Button>
             </div>
           </div>
         </div>

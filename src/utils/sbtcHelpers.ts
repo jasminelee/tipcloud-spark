@@ -51,7 +51,7 @@ export const sendSBTC = async (
 };
 
 /**
- * Check if SBTC wallet is connected
+ * Check if SBTC wallet is connected without triggering wallet UI
  * @returns Boolean indicating if wallet is connected
  */
 export const isSBTCWalletConnected = async (): Promise<boolean> => {
@@ -66,6 +66,7 @@ export const isSBTCWalletConnected = async (): Promise<boolean> => {
     if (window.LeatherProvider) {
       const leather = window.LeatherProvider;
       try {
+        // This shouldn't trigger UI, just check if already connected
         const accounts = await leather.request('getAddresses');
         return Array.isArray(accounts) && accounts.length > 0;
       } catch (e) {
@@ -111,7 +112,7 @@ export const isSBTCWalletConnected = async (): Promise<boolean> => {
 };
 
 /**
- * Connect to SBTC wallet
+ * Connect to SBTC wallet - explicitly triggers wallet UI
  * @returns Promise with connection status
  */
 export const connectSBTCWallet = async (): Promise<boolean> => {
@@ -123,7 +124,7 @@ export const connectSBTCWallet = async (): Promise<boolean> => {
       console.log("Using LeatherProvider");
       const leather = window.LeatherProvider;
       
-      // Request connection using the new API
+      // Request connection using the new API - this will trigger the wallet UI
       await leather.request('requestAccounts');
       
       // Verify connection after attempting to connect
