@@ -29,17 +29,32 @@ const DJProfile = () => {
       try {
         setLoading(true);
         
-        if (!id) return;
+        if (!id) {
+          console.error("Error fetching DJ profile: No ID provided");
+          return;
+        }
         
-        const { data, error } = await supabase
-          .from('dj_profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
+        console.log("Fetching DJ profile with ID:", id);
         
-        if (error) throw error;
-        
-        if (data) {
+        try {
+          const { data, error } = await supabase
+            .from('dj_profiles')
+            .select('*')
+            .eq('id', id)
+            .single();
+          
+          if (error) {
+            console.error("Supabase error:", error);
+            throw error;
+          }
+          
+          if (!data) {
+            console.error("No DJ profile found with ID:", id);
+            return;
+          }
+          
+          console.log("DJ profile data:", data);
+          
           const djWithTracks = {
             ...data,
             tracks: SAMPLE_TRACKS,
@@ -49,9 +64,16 @@ const DJProfile = () => {
           };
           
           setDj(djWithTracks);
+        } catch (supabaseError) {
+          console.error("Error in Supabase query:", supabaseError);
+          throw supabaseError;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching DJ profile:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        console.error("Error details:", error.details);
+        console.error("Error hint:", error.hint);
       } finally {
         setLoading(false);
       }

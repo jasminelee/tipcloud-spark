@@ -119,7 +119,18 @@ const RegisterDJ = () => {
               </p>
             </div>
             <Button 
-              onClick={() => navigate(`/dj/${supabase.auth.getUser().then(({data}) => data.user?.id)}`)}
+              onClick={async () => {
+                try {
+                  const { data } = await supabase.auth.getUser();
+                  if (data.user?.id) {
+                    navigate(`/dj/${data.user.id}`);
+                  } else {
+                    console.error("User ID not found");
+                  }
+                } catch (error) {
+                  console.error("Error navigating to DJ profile:", error);
+                }
+              }}
               className="bg-soundcloud hover:bg-soundcloud-dark text-white"
               size="lg"
             >
