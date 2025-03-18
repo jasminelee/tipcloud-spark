@@ -1,22 +1,68 @@
-
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronDown, Music, HandCoins, Heart } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeaturedDJs from '@/components/FeaturedDJs';
+import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const timeout = setTimeout(() => {
       setIsVisible(true);
     }, 100);
     
+    const checkWalletConnection = async () => {
+      try {
+        const connected = await isSBTCWalletConnected();
+        setIsWalletConnected(connected);
+      } catch (error) {
+        console.error("Error checking wallet connection:", error);
+      }
+    };
+    
+    checkWalletConnection();
+    
     return () => clearTimeout(timeout);
   }, []);
+  
+  const handleConnectWallet = async () => {
+    setIsConnecting(true);
+    
+    try {
+      if (typeof window === 'undefined' || (!window.btc && !window.LeatherProvider)) {
+        toast.error("No Bitcoin wallet detected", {
+          description: "Please install Leather or another compatible wallet"
+        });
+        return;
+      }
+      
+      const connected = await connectSBTCWallet();
+      
+      if (connected) {
+        setIsWalletConnected(true);
+        toast.success("Wallet connected successfully!");
+      } else {
+        toast.error("Failed to connect wallet", {
+          description: "Please try again or use a different wallet"
+        });
+      }
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      toast.error("Error connecting wallet", {
+        description: error instanceof Error ? error.message : "Unknown error occurred"
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
   
   return (
     <section className="relative min-h-screen flex items-center pt-24 pb-16">
@@ -57,15 +103,24 @@ const HeroSection = () => {
                   <ArrowRight size={18} className="ml-2" />
                 </Button>
               </Link>
-              <Link to="/connect">
-                <Button 
-                  variant="outline" 
-                  className="w-full sm:w-auto px-8 py-6 rounded-full"
-                  size="lg"
-                >
-                  Connect Wallet
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                className="w-full sm:w-auto px-8 py-6 rounded-full"
+                size="lg"
+                onClick={isWalletConnected ? () => navigate('/') : handleConnectWallet}
+                disabled={isConnecting}
+              >
+                {isConnecting ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                    Connecting...
+                  </>
+                ) : isWalletConnected ? (
+                  <>Wallet Connected</>
+                ) : (
+                  <>Connect Wallet</>
+                )}
+              </Button>
             </div>
           </div>
           

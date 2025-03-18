@@ -22,6 +22,11 @@ const ConnectWallet = () => {
         const connected = await isSBTCWalletConnected();
         console.log("Wallet connection check result:", connected);
         setIsConnected(connected);
+        
+        // If already connected, redirect to home after a short delay
+        if (connected) {
+          setTimeout(() => navigate('/'), 1000);
+        }
       } catch (error) {
         console.error("Error checking wallet connection:", error);
         setIsConnected(false);
@@ -31,13 +36,13 @@ const ConnectWallet = () => {
     };
     
     checkConnection();
-  }, []);
+  }, [navigate]);
   
   const handleConnectWallet = async () => {
     setIsConnecting(true);
     
     try {
-      if (!window.btc) {
+      if (typeof window === 'undefined' || (!window.btc && !window.LeatherProvider)) {
         toast.error("No Bitcoin wallet detected", {
           description: "Please install Leather or another compatible wallet"
         });
@@ -50,7 +55,7 @@ const ConnectWallet = () => {
         setIsConnected(true);
         toast.success("Wallet connected successfully!");
         // Redirect to home after successful connection
-        setTimeout(() => navigate('/'), 1500);
+        setTimeout(() => navigate('/'), 1000);
       } else {
         toast.error("Failed to connect wallet", {
           description: "Please try again or use a different wallet"

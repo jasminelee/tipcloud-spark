@@ -62,17 +62,39 @@ export const isSBTCWalletConnected = async (): Promise<boolean> => {
   }
   
   try {
+    // Check for Leather wallet (new API)
+    if (window.LeatherProvider) {
+      const leather = window.LeatherProvider;
+      try {
+        const accounts = await leather.request('getAddresses');
+        return Array.isArray(accounts) && accounts.length > 0;
+      } catch (e) {
+        console.log("Leather wallet not connected", e);
+        return false;
+      }
+    }
+    
     // Try to get accounts or address to verify actual connection
     // This is a common pattern with Bitcoin wallets
     if (window.btc.request) {
-      const accounts = await window.btc.request({ method: 'getAccounts' }).catch(() => null);
-      return Array.isArray(accounts) && accounts.length > 0;
+      try {
+        const accounts = await window.btc.request({ method: 'getAccounts' });
+        return Array.isArray(accounts) && accounts.length > 0;
+      } catch (e) {
+        console.log("Standard wallet not connected", e);
+        return false;
+      }
     }
     
     // Leather wallet specific check
     if (window.btc.getAccounts) {
-      const accounts = await window.btc.getAccounts().catch(() => null);
-      return Array.isArray(accounts) && accounts.length > 0;
+      try {
+        const accounts = await window.btc.getAccounts();
+        return Array.isArray(accounts) && accounts.length > 0;
+      } catch (e) {
+        console.log("Wallet getAccounts error", e);
+        return false;
+      }
     }
     
     // Fallback for other wallet implementations
@@ -95,39 +117,58 @@ export const isSBTCWalletConnected = async (): Promise<boolean> => {
 export const connectSBTCWallet = async (): Promise<boolean> => {
   console.log("Attempting to connect to SBTC wallet...");
   
-  if (typeof window === 'undefined' || !window.btc) {
-    console.error("No Bitcoin wallet found. Please install a compatible wallet.");
-    return false;
+  // First check for Leather provider (recommended in error message)
+  if (typeof window !== 'undefined' && window.LeatherProvider) {
+    try {
+      console.log("Using LeatherProvider");
+      const leather = window.LeatherProvider;
+      
+      // Request connection using the new API
+      await leather.request('requestAccounts');
+      
+      // Verify connection after attempting to connect
+      const isConnected = await isSBTCWalletConnected();
+      console.log(`Leather wallet connection ${isConnected ? 'successful' : 'failed'}`);
+      return isConnected;
+    } catch (error) {
+      console.error("Error connecting to Leather wallet:", error);
+    }
   }
   
-  try {
-    // In a real implementation, this would be the actual wallet connection code
-    
-    // Handle Leather wallet connection
-    if (window.btc.request) {
-      await window.btc.request({ method: 'getAccounts' }).catch(() => {
-        // If getAccounts fails, try requesting accounts
-        return window.btc.request({ method: 'request_accounts' });
-      });
+  // Fallback to old method
+  if (typeof window !== 'undefined' && window.btc) {
+    try {
+      console.log("Falling back to window.btc");
+      
+      // Handle Leather wallet connection
+      if (window.btc.request) {
+        try {
+          await window.btc.request({ method: 'request_accounts' });
+        } catch (e) {
+          console.error("Failed request_accounts, trying getAccounts", e);
+          await window.btc.request({ method: 'getAccounts' });
+        }
+      }
+      
+      // Verify connection after attempting to connect
+      const isConnected = await isSBTCWalletConnected();
+      
+      console.log(`SBTC wallet connection ${isConnected ? 'successful' : 'failed'}`);
+      return isConnected;
+    } catch (error) {
+      console.error("Error connecting to wallet:", error);
+      return false;
     }
-    
-    // Wait a bit to simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Verify connection after attempting to connect
-    const isConnected = await isSBTCWalletConnected();
-    
-    console.log(`SBTC wallet connection ${isConnected ? 'successful' : 'failed'}`);
-    return isConnected;
-  } catch (error) {
-    console.error("Error connecting to wallet:", error);
-    return false;
   }
+  
+  console.error("No Bitcoin wallet found. Please install a compatible wallet.");
+  return false;
 };
 
-// For TypeScript to recognize the global window.btc object
+// For TypeScript to recognize the global window objects
 declare global {
   interface Window {
     btc?: any;
+    LeatherProvider?: any;
   }
 }
