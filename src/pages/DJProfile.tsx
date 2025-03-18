@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Music, Users, Calendar, MapPin, ExternalLink, Share2, HandCoins } from 'lucide-react';
@@ -40,12 +41,13 @@ const DJProfile = () => {
         if (error) throw error;
         
         if (data) {
+          // Add default values for properties that might not exist in the database
           const djWithTracks = {
             ...data,
             tracks: SAMPLE_TRACKS,
-            location: data.location || 'Unknown Location',
+            location: 'Unknown Location', // Default location
             joinedDate: data.created_at,
-            coverUrl: data.cover_url || "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2000&auto=format&fit=crop"
+            coverUrl: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2000&auto=format&fit=crop" // Default cover image
           };
           
           setDj(djWithTracks);

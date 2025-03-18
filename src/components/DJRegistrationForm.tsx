@@ -50,12 +50,17 @@ const DJRegistrationForm = () => {
         return;
       }
 
-      // Create DJ profile
+      // Create DJ profile - fixed the typing issue by ensuring all required fields are present
       const { error } = await supabase
         .from('dj_profiles')
         .insert({
           id: user.id,
-          ...data,
+          name: data.name,           // Make sure name is always provided
+          genre: data.genre,
+          soundcloud_url: data.soundcloud_url,
+          wallet_address: data.wallet_address,
+          bio: data.bio,
+          image_url: data.image_url,
         });
 
       if (error) throw error;
