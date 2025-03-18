@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, User, LogOut, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import AnimatedLogo from '@/components/AnimatedLogo';
 import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -12,7 +21,9 @@ const Header = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
+  const [user, setUser] = useState<any>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Helper function to abbreviate addresses
   const abbreviateAddress = (address: string) => {
@@ -27,9 +38,29 @@ const Header = () => {
     
     window.addEventListener('scroll', handleScroll);
     
-    // Don't check wallet connection on page load
+    // Check if user is logged in with Supabase
+    const checkUserAuth = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        setUser(data.user);
+      }
+    };
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    checkUserAuth();
+    
+    // Subscribe to auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+    });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      authListener.subscription.unsubscribe();
+    };
   }, []);
   
   useEffect(() => {
@@ -122,11 +153,22 @@ const Header = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Logged out successfully");
+      navigate('/');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
+  };
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'DJs', path: '/dj/featured' },
     { name: 'About', path: '/about' },
-    { name: 'Register as DJ', path: '/register-dj' },
+    { name: 'Become a DJ', path: '/register-dj' },
   ];
   
   // Display wallet address if connected
@@ -168,14 +210,38 @@ const Header = () => {
                 {link.name}
               </Link>
             ))}
-            <Button 
-              className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
-              shadow-md transition-all duration-300 ease-out transform hover:-translate-y-0.5"
-              onClick={handleConnectWallet}
-              disabled={isConnecting}
-            >
-              {getWalletButtonText()}
-            </Button>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="rounded-full border-soundcloud text-soundcloud">
+                    <User size={16} className="mr-2" />
+                    {user.email ? user.email.split('@')[0] : "Account"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/dj/' + user.id)}>
+                    <Music className="mr-2 h-4 w-4" />
+                    <span>DJ Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
+                shadow-md transition-all duration-300 ease-out transform hover:-translate-y-0.5"
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+              >
+                {getWalletButtonText()}
+              </Button>
+            )}
           </nav>
           
           {/* Mobile Menu Button */}
@@ -204,14 +270,32 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
-              <Button 
-                className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
-                shadow-md transition-all duration-300 ease-out"
-                onClick={handleConnectWallet}
-                disabled={isConnecting}
-              >
-                {getWalletButtonText()}
-              </Button>
+              
+              {user ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-500">Signed in as</div>
+                    <div className="font-medium">{user.email}</div>
+                  </div>
+                  <Button onClick={() => navigate('/dj/' + user.id)} variant="outline" className="w-full">
+                    <Music className="mr-2 h-4 w-4" />
+                    DJ Profile
+                  </Button>
+                  <Button onClick={handleLogout} variant="outline" className="text-red-500 border-red-500">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
+                  shadow-md transition-all duration-300 ease-out"
+                  onClick={handleConnectWallet}
+                  disabled={isConnecting}
+                >
+                  {getWalletButtonText()}
+                </Button>
+              )}
             </div>
           </div>
         </div>

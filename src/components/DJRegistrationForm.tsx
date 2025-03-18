@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,7 +23,11 @@ const djFormSchema = z.object({
 
 type DJFormValues = z.infer<typeof djFormSchema>;
 
-const DJRegistrationForm = () => {
+interface DJRegistrationFormProps {
+  walletAddress?: string;
+}
+
+const DJRegistrationForm: React.FC<DJRegistrationFormProps> = ({ walletAddress = "" }) => {
   const navigate = useNavigate();
 
   const form = useForm<DJFormValues>({
@@ -33,11 +36,17 @@ const DJRegistrationForm = () => {
       name: "",
       genre: "",
       soundcloud_url: "https://soundcloud.com/",
-      wallet_address: "",
+      wallet_address: walletAddress,
       bio: "",
       image_url: "https://images.unsplash.com/photo-1571741140674-8949ca7df2a7?q=80&w=1000&auto=format&fit=crop",
     },
   });
+
+  React.useEffect(() => {
+    if (walletAddress) {
+      form.setValue("wallet_address", walletAddress);
+    }
+  }, [walletAddress, form]);
 
   const onSubmit = async (data: DJFormValues) => {
     try {
