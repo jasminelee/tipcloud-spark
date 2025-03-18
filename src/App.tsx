@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import DJProfile from "./pages/DJProfile";
 import About from "./pages/About";
 import ConnectWallet from "./pages/ConnectWallet";
+import RegisterDJ from "./pages/RegisterDJ";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/dj/:id" element={<DJProfile />} />
           <Route path="/about" element={<About />} />
           <Route path="/connect" element={<ConnectWallet />} />
+          <Route path="/register-dj" element={<RegisterDJ />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
