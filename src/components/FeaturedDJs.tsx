@@ -115,7 +115,15 @@ const FeaturedDJs = () => {
       }
       
       if (data && data.length > 0) {
-        setFeaturedDjs(data);
+        // If we have fewer than 4 DJs from the database, fill in the remaining slots with mock DJs
+        if (data.length < 4) {
+          const numMockDjsNeeded = 4 - data.length;
+          const mockDjsToAdd = MOCK_FEATURED_DJS.slice(0, numMockDjsNeeded);
+          
+          setFeaturedDjs([...data, ...mockDjsToAdd]);
+        } else {
+          setFeaturedDjs(data);
+        }
       } else {
         console.log('No featured DJs found, using mock data');
         setFeaturedDjs(MOCK_FEATURED_DJS);
