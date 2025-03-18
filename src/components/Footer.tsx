@@ -71,7 +71,7 @@ const Footer = () => {
               © {new Date().getFullYear()} TipCloud. All rights reserved.
             </p>
             <p className="text-sm text-muted-foreground mt-2 md:mt-0">
-              Powered by Stacks Connect
+              Powered by Stacks
             </p>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeaturedDJs from '@/components/FeaturedDJs';
+import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -42,7 +43,7 @@ const HeroSection = () => {
       // Check if Leather wallet is installed
       if (window.LeatherProvider) {
         try {
-          const result = await connectsBTCWallet();
+          const result = await connectSBTCWallet();
           
           if (result.connected) {
             setIsWalletConnected(true);

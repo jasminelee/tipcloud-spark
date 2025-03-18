@@ -164,7 +164,7 @@ const About = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <span className="inline-block bg-soundcloud/10 text-soundcloud px-4 py-1 rounded-full text-sm font-medium mb-4">
-                  Powered by Stacks Connect
+                  Powered by Stacks
                 </span>
                 <h2 className="text-3xl font-display font-bold mb-6">
                   Bitcoin Micropayments Made Simple
