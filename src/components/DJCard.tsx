@@ -4,7 +4,6 @@ import { Users, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-// Interface for DJ object
 interface DJ {
   id: string;
   name: string;
@@ -18,7 +17,6 @@ interface DJ {
   updated_at?: string;
 }
 
-// Original direct props interface
 interface DirectDJCardProps {
   id: string;
   name: string;
