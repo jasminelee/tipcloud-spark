@@ -11,7 +11,14 @@ const ConnectWallet = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [checkingConnection, setCheckingConnection] = useState(true);
+  const [userAddress, setUserAddress] = useState("");
   const navigate = useNavigate();
+  
+  // Helper function to abbreviate addresses
+  const abbreviateAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
   
   useEffect(() => {
     // Check if wallet is already connected
@@ -23,6 +30,21 @@ const ConnectWallet = () => {
         
         console.log("Wallet connection passive check result:", connected);
         setIsConnected(!!connected);
+        
+        // If connected, try to get the address
+        if (connected && window.LeatherProvider) {
+          try {
+            const response = await window.LeatherProvider.request("getAddresses");
+            if (response?.result?.addresses) {
+              const stacksAddress = response.result.addresses.find(addr => addr.symbol === "STX")?.address;
+              if (stacksAddress) {
+                setUserAddress(stacksAddress);
+              }
+            }
+          } catch (addressError) {
+            console.error("Error fetching wallet addresses:", addressError);
+          }
+        }
         
         // If already connected, redirect to home after a short delay
         if (connected) {
@@ -56,6 +78,20 @@ const ConnectWallet = () => {
           if (connected) {
             setIsConnected(true);
             toast.success("Leather wallet connected successfully!");
+            
+            // Get the user's Stacks address and abbreviate it
+            try {
+              const response = await window.LeatherProvider.request("getAddresses");
+              if (response?.result?.addresses) {
+                const stacksAddress = response.result.addresses.find(addr => addr.symbol === "STX")?.address;
+                if (stacksAddress) {
+                  setUserAddress(stacksAddress);
+                }
+              }
+            } catch (addressError) {
+              console.error("Error fetching wallet addresses:", addressError);
+            }
+            
             // Redirect to home after successful connection
             setTimeout(() => navigate('/'), 1000);
           } else {
@@ -114,6 +150,41 @@ const ConnectWallet = () => {
     }
   };
   
+  // Display wallet address or appropriate button text
+  const getWalletButtonText = () => {
+    if (isConnecting) {
+      return (
+        <>
+          <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+          Connecting...
+        </>
+      );
+    } else if (isConnected) {
+      if (userAddress) {
+        return (
+          <>
+            Continue ({abbreviateAddress(userAddress)})
+            <ArrowRight size={18} className="ml-2" />
+          </>
+        );
+      } else {
+        return (
+          <>
+            Continue to App
+            <ArrowRight size={18} className="ml-2" />
+          </>
+        );
+      }
+    } else {
+      return (
+        <>
+          Connect Wallet
+          {!isConnecting && !checkingConnection && <ArrowRight size={18} className="ml-2" />}
+        </>
+      );
+    }
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -143,7 +214,9 @@ const ConnectWallet = () => {
                     <div>
                       <h3 className="font-medium">Wallet Status</h3>
                       <p className="text-sm text-muted-foreground">
-                        Your wallet is connected and ready to send tips.
+                        {userAddress ? 
+                          `Connected: ${abbreviateAddress(userAddress)}` : 
+                          `Your wallet is connected and ready to send tips.`}
                       </p>
                     </div>
                   </>
@@ -161,24 +234,13 @@ const ConnectWallet = () => {
               </div>
             </div>
             
-            {isConnected ? (
-              <Button 
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-6"
-                onClick={() => navigate('/')}
-              >
-                Continue to App
-                <ArrowRight size={18} className="ml-2" />
-              </Button>
-            ) : (
-              <Button 
-                className="w-full bg-soundcloud hover:bg-soundcloud-dark text-white font-medium py-6"
-                onClick={handleConnectWallet}
-                disabled={isConnecting || checkingConnection}
-              >
-                {isConnecting ? "Connecting..." : "Connect Wallet"}
-                {!isConnecting && !checkingConnection && <ArrowRight size={18} className="ml-2" />}
-              </Button>
-            )}
+            <Button 
+              className="w-full bg-soundcloud hover:bg-soundcloud-dark text-white font-medium py-6 flex items-center justify-center"
+              onClick={isConnected ? () => navigate('/') : handleConnectWallet}
+              disabled={isConnecting || checkingConnection}
+            >
+              {getWalletButtonText()}
+            </Button>
             
             <div className="mt-6 pt-6 border-t border-border">
               <h3 className="font-medium mb-2">Don't have a wallet?</h3>

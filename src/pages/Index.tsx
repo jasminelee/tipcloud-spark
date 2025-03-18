@@ -12,7 +12,14 @@ const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
   const navigate = useNavigate();
+  
+  // Helper function to abbreviate addresses
+  const abbreviateAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
   
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -41,6 +48,19 @@ const HeroSection = () => {
           if (connected) {
             setIsWalletConnected(true);
             toast.success("Leather wallet connected successfully!");
+            
+            // Get the user's Stacks address and abbreviate it
+            try {
+              const response = await window.LeatherProvider.request("getAddresses");
+              if (response?.result?.addresses) {
+                const stacksAddress = response.result.addresses.find(addr => addr.symbol === "STX")?.address;
+                if (stacksAddress) {
+                  setUserAddress(stacksAddress);
+                }
+              }
+            } catch (addressError) {
+              console.error("Error fetching wallet addresses:", addressError);
+            }
           } else {
             toast.error("Failed to connect Leather wallet", {
               description: "Please try again or check if Leather wallet is properly set up"
@@ -95,6 +115,26 @@ const HeroSection = () => {
     }
   };
   
+  // Display wallet address or appropriate button text
+  const getWalletButtonText = () => {
+    if (isConnecting) {
+      return (
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+          <span>Connecting...</span>
+        </div>
+      );
+    } else if (isWalletConnected) {
+      if (userAddress) {
+        return abbreviateAddress(userAddress);
+      } else {
+        return "Wallet Connected";
+      }
+    } else {
+      return "Connect Wallet";
+    }
+  };
+  
   return (
     <section className="relative min-h-screen flex items-center pt-24 pb-16">
       <div 
@@ -105,111 +145,68 @@ const HeroSection = () => {
         }}
       />
       
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-          <div 
-            className={`transform transition-all duration-1000 ease-out ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <span className="inline-block bg-soundcloud/10 text-soundcloud px-4 py-1 rounded-full text-sm font-medium mb-4">
-              Support your favorite artists
-            </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-display font-bold leading-tight tracking-tight mb-6">
-              Directly Tip <span className="text-soundcloud">SoundCloud DJs</span> With Bitcoin
+      <div 
+        className={`container mx-auto px-4 pt-28 pb-8 transition-opacity duration-1000 ${
+          isVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="fade-in">
+            <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight mb-6">
+              Support Your Favorite <br />
+              <span className="text-soundcloud">SoundCloud Artists</span> <br />
+              Directly
             </h1>
-            <p className="text-muted-foreground text-lg mb-8 max-w-lg">
-              TipTune makes it easy to support your favorite SoundCloud DJs 
-              with SBTC micropayments, creating a direct connection between artists and fans.
+            <p className="text-lg text-gray-700 mb-8 max-w-lg">
+              TipTune makes it easy to support your favorite SoundCloud DJs with Bitcoin 
+              micropayments, creating a direct connection between artists and fans.
             </p>
-            
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              <Link to="/dj/featured">
-                <Button 
-                  className="w-full sm:w-auto bg-soundcloud hover:bg-soundcloud-dark text-white px-8 py-6 rounded-full 
-                  shadow-md hover:shadow-glow transition-all duration-300 ease-out transform hover:-translate-y-0.5"
-                  size="lg"
-                >
-                  Discover DJs
-                  <ArrowRight size={18} className="ml-2" />
-                </Button>
-              </Link>
               <Button 
-                variant="outline" 
-                className="w-full sm:w-auto px-8 py-6 rounded-full"
+                className="bg-soundcloud hover:bg-soundcloud-dark text-white font-bold px-8 py-4 
+                rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1 
+                flex items-center justify-center"
                 size="lg"
                 onClick={isWalletConnected ? () => navigate('/') : handleConnectWallet}
                 disabled={isConnecting}
               >
-                {isConnecting ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
-                    Connecting...
-                  </>
-                ) : isWalletConnected ? (
-                  <>Wallet Connected</>
-                ) : (
-                  <>Connect Wallet</>
-                )}
+                {getWalletButtonText()}
+                <div className="ml-2">→</div>
               </Button>
+              <Link to="/dj/featured">
+                <Button 
+                  variant="outline" 
+                  className="border-2 border-soundcloud hover:bg-soundcloud/10 text-soundcloud font-bold
+                  px-8 py-4 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1
+                  w-full sm:w-auto"
+                  size="lg"
+                >
+                  Discover DJs
+                </Button>
+              </Link>
             </div>
           </div>
-          
-          <div 
-            className={`relative transform transition-all duration-1000 ease-out delay-300 ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <div className="relative z-10 bg-white rounded-2xl shadow-hard overflow-hidden">
-              <div className="bg-soundcloud h-1" />
-              <div className="p-6">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-soundcloud/10 rounded-full flex items-center justify-center">
-                    <Music className="h-6 w-6 text-soundcloud" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="font-medium">Melodic Master</h3>
-                    <p className="text-sm text-muted-foreground">House · 42.5K followers</p>
-                  </div>
-                </div>
-                
-                <div className="rounded-lg overflow-hidden bg-secondary/50 h-48 mb-6 flex items-center justify-center">
-                  <div className="text-center">
-                    <Music className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                    <p className="text-sm text-muted-foreground mt-2">SoundCloud Player</p>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2 mb-2">
-                  <Button className="flex-1 bg-soundcloud text-white hover:bg-soundcloud-dark">
-                    <HandCoins size={16} className="mr-2" />
-                    Tip DJ
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <Heart size={16} />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="absolute top-8 right-8 w-64 h-64 bg-tipOrange-100 rounded-full filter blur-3xl opacity-20 z-0" />
-            <div className="absolute bottom-12 left-12 w-32 h-32 bg-soundcloud rounded-full filter blur-3xl opacity-10 z-0" />
+          <div className="hidden lg:block">
+            <img src="/images/hero-dj.webp" alt="DJ with headphones" className="w-full h-auto rounded-xl shadow-xl" />
           </div>
         </div>
       </div>
       
       <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-        <button 
-          className="animate-bounce p-2 rounded-full bg-white shadow-soft"
+        <div 
+          className="cursor-pointer animate-bounce bg-white p-2 w-10 h-10 ring-1 ring-slate-900/5 
+          shadow-lg rounded-full flex items-center justify-center"
           onClick={() => {
-            window.scrollTo({
-              top: window.innerHeight,
-              behavior: 'smooth'
-            });
+            const featuredSection = document.getElementById('featured-djs');
+            if (featuredSection) {
+              featuredSection.scrollIntoView({ behavior: 'smooth' });
+            }
           }}
         >
-          <ChevronDown size={24} className="text-muted-foreground" />
-        </button>
+          <svg className="w-6 h-6 text-soundcloud" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+          </svg>
+        </div>
       </div>
     </section>
   );

@@ -11,7 +11,14 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
   const location = useLocation();
+  
+  // Helper function to abbreviate addresses
+  const abbreviateAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
   
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +60,19 @@ const Header = () => {
           if (connected) {
             setIsWalletConnected(true);
             toast.success("Leather wallet connected successfully!");
+            
+            // Get the user's Stacks address and abbreviate it
+            try {
+              const response = await window.LeatherProvider.request("getAddresses");
+              if (response?.result?.addresses) {
+                const stacksAddress = response.result.addresses.find(addr => addr.symbol === "STX")?.address;
+                if (stacksAddress) {
+                  setUserAddress(stacksAddress);
+                }
+              }
+            } catch (addressError) {
+              console.error("Error fetching wallet addresses:", addressError);
+            }
           } else {
             toast.error("Failed to connect Leather wallet", {
               description: "Please try again or check if Leather wallet is properly set up"
@@ -113,6 +133,22 @@ const Header = () => {
     { name: 'About', path: '/about' },
   ];
   
+  // Display wallet address if connected
+  const getWalletButtonText = () => {
+    if (isConnecting) {
+      return (
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+          <span>Connecting...</span>
+        </div>
+      );
+    } else if (isWalletConnected) {
+      return userAddress ? abbreviateAddress(userAddress) : "Wallet Connected";
+    } else {
+      return "Connect Wallet";
+    }
+  };
+  
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out
       ${isScrolled ? 'bg-white/80 backdrop-blur-lg shadow-soft py-3' : 'bg-transparent py-5'}`}>
@@ -140,18 +176,9 @@ const Header = () => {
               className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
               shadow-md transition-all duration-300 ease-out transform hover:-translate-y-0.5"
               onClick={handleConnectWallet}
-              disabled={isConnecting || isWalletConnected}
+              disabled={isConnecting}
             >
-              {isConnecting ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
-                  <span>Connecting...</span>
-                </div>
-              ) : isWalletConnected ? (
-                "Wallet Connected"
-              ) : (
-                "Connect Wallet"
-              )}
+              {getWalletButtonText()}
             </Button>
           </nav>
           
@@ -185,18 +212,9 @@ const Header = () => {
                 className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
                 shadow-md transition-all duration-300 ease-out"
                 onClick={handleConnectWallet}
-                disabled={isConnecting || isWalletConnected}
+                disabled={isConnecting}
               >
-                {isConnecting ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
-                    <span>Connecting...</span>
-                  </div>
-                ) : isWalletConnected ? (
-                  "Wallet Connected"
-                ) : (
-                  "Connect Wallet"
-                )}
+                {getWalletButtonText()}
               </Button>
             </div>
           </div>
