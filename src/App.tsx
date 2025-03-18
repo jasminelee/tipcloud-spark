@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +8,7 @@ import DJProfile from "./pages/DJProfile";
 import About from "./pages/About";
 import ConnectWallet from "./pages/ConnectWallet";
 import RegisterDJ from "./pages/RegisterDJ";
+import DJDirectory from "./pages/DJDirectory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/dj/featured" element={<DJDirectory />} />
           <Route path="/dj/:id" element={<DJProfile />} />
           <Route path="/about" element={<About />} />
           <Route path="/connect" element={<ConnectWallet />} />
