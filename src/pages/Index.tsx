@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronDown, Music, HandCoins, Heart } from 'lucide-react';
@@ -7,12 +8,15 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeaturedDJs from '@/components/FeaturedDJs';
 import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
+import { supabase } from '@/integrations/supabase/client';
 
 const HeroSection = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isDJProfile, setIsDJProfile] = useState(false);
   const navigate = useNavigate();
   
   // Helper function to abbreviate addresses
@@ -26,7 +30,33 @@ const HeroSection = () => {
       setIsVisible(true);
     }, 100);
     
-    // Don't check wallet connection on page load
+    // Check authentication status and DJ profile status
+    const checkAuthAndDJStatus = async () => {
+      try {
+        // Check wallet connection first
+        const walletConnected = await isSBTCWalletConnected();
+        setIsWalletConnected(walletConnected);
+        
+        // Check authentication status
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          setIsLoggedIn(true);
+          
+          // Check if user has a DJ profile
+          const { data: djProfile } = await supabase
+            .from('dj_profiles')
+            .select('id')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          setIsDJProfile(!!djProfile);
+        }
+      } catch (error) {
+        console.error("Error checking auth status:", error);
+      }
+    };
+    
+    checkAuthAndDJStatus();
     
     return () => clearTimeout(timeout);
   }, []);
@@ -56,6 +86,24 @@ const HeroSection = () => {
                 setUserAddress(stacksAddress);
               }
             }
+            
+            // Check auth status after wallet connection
+            const { data } = await supabase.auth.getSession();
+            if (!data.session) {
+              // Navigate to connect page for authentication only if not already authenticated
+              navigate('/connect');
+            } else {
+              setIsLoggedIn(true);
+              
+              // Check for DJ profile
+              const { data: djProfile } = await supabase
+                .from('dj_profiles')
+                .select('id')
+                .eq('id', data.session.user.id)
+                .single();
+                
+              setIsDJProfile(!!djProfile);
+            }
           } else {
             toast.error("Failed to connect Leather wallet", {
               description: "Connection was rejected or failed. Please try again."
@@ -80,6 +128,13 @@ const HeroSection = () => {
           if (result.connected) {
             setIsWalletConnected(true);
             toast.success("Wallet connected successfully!");
+            
+            // Check auth status
+            const { data } = await supabase.auth.getSession();
+            if (!data.session) {
+              // Navigate to connect page for authentication only if not already authenticated
+              navigate('/connect');
+            }
           } else {
             toast.error("Failed to connect wallet", {
               description: "Connection was rejected or failed. Please try again."
@@ -162,23 +217,41 @@ const HeroSection = () => {
                 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1 
                 flex items-center justify-center"
                 size="lg"
-                onClick={isWalletConnected ? () => navigate('/') : handleConnectWallet}
+                onClick={handleConnectWallet}
                 disabled={isConnecting}
               >
                 {getWalletButtonText()}
                 <div className="ml-2">→</div>
               </Button>
-              <Link to="/dj/featured">
-                <Button 
-                  variant="outline" 
-                  className="border-2 border-soundcloud hover:bg-soundcloud/10 text-soundcloud font-bold
-                  px-8 py-4 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1
-                  w-full sm:w-auto"
-                  size="lg"
-                >
-                  Discover DJs
-                </Button>
-              </Link>
+              
+              {isLoggedIn && !isDJProfile && (
+                <Link to="/register-dj">
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-soundcloud hover:bg-soundcloud/10 text-soundcloud font-bold
+                    px-8 py-4 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1
+                    w-full sm:w-auto flex items-center"
+                    size="lg"
+                  >
+                    <Music className="mr-2 h-5 w-5" />
+                    Register as DJ
+                  </Button>
+                </Link>
+              )}
+              
+              {!isLoggedIn && (
+                <Link to="/dj/featured">
+                  <Button 
+                    variant="outline" 
+                    className="border-2 border-soundcloud hover:bg-soundcloud/10 text-soundcloud font-bold
+                    px-8 py-4 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1
+                    w-full sm:w-auto"
+                    size="lg"
+                  >
+                    Discover DJs
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
           <div className="hidden lg:block">

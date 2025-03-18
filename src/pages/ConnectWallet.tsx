@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -58,10 +59,7 @@ const ConnectWallet = () => {
           }
         }
         
-        // If already connected, redirect to home after a short delay
-        if (connected) {
-          setTimeout(() => navigate('/'), 1000);
-        }
+        // Remove automatic redirection - let the user control navigation
       } catch (error) {
         console.error("Error checking wallet connection:", error);
         setIsConnected(false);
@@ -95,9 +93,7 @@ const ConnectWallet = () => {
                 }
               }
               
-              setTimeout(() => {
-                navigate('/');
-              }, 500);
+              // Don't automatically redirect
             } else {
               toast.error("Failed to connect Leather wallet", {
                 description: "Connection was rejected or failed. Please try again."
@@ -118,9 +114,7 @@ const ConnectWallet = () => {
               setIsConnected(true);
               toast.success("Wallet connected successfully!");
               
-              setTimeout(() => {
-                navigate('/');
-              }, 500);
+              // Don't automatically redirect
             } else {
               toast.error("Failed to connect wallet", {
                 description: "Connection was rejected or failed. Please try again."

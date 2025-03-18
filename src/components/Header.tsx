@@ -20,6 +20,8 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isDJProfile, setIsDJProfile] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [userAddress, setUserAddress] = useState("");
   
   useEffect(() => {
     const checkWalletConnection = async () => {
@@ -47,14 +49,56 @@ const Header = () => {
     checkWalletConnection();
   }, [location.pathname]);
   
+  // Helper function to abbreviate addresses
+  const abbreviateAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+  
   const handleConnectWallet = async () => {
     try {
-      // Pass explicit intent to trigger wallet UI
-      await connectSBTCWallet();
-      navigate('/connect');
+      setIsConnecting(true);
+      
+      // Connect to wallet without redirecting
+      const result = await connectSBTCWallet();
+      
+      if (result.connected) {
+        // Set wallet address if available
+        if (result.addresses) {
+          const stacksAddress = result.addresses.find(addr => addr.symbol === "STX")?.address;
+          if (stacksAddress) {
+            setUserAddress(stacksAddress);
+          }
+        }
+        
+        toast.success("Wallet connected successfully!");
+        
+        // Check if user is authenticated with Supabase
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          setIsLoggedIn(true);
+          setUserId(data.session.user.id);
+          
+          // Check if user has a DJ profile
+          const { data: djProfile } = await supabase
+            .from('dj_profiles')
+            .select('id')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          setIsDJProfile(!!djProfile);
+        } else {
+          // If wallet is connected but not authenticated with Supabase
+          navigate('/connect'); // Only redirect if not authenticated
+        }
+      } else {
+        toast.error("Failed to connect wallet. Please try again.");
+      }
     } catch (error) {
       console.error("Failed to connect wallet:", error);
       toast.error("Failed to connect wallet. Please try again.");
+    } finally {
+      setIsConnecting(false);
     }
   };
   
@@ -134,8 +178,20 @@ const Header = () => {
                 </DropdownMenu>
               </>
             ) : (
-              <Button onClick={handleConnectWallet}>
-                Connect Wallet
+              <Button 
+                onClick={handleConnectWallet} 
+                disabled={isConnecting}
+              >
+                {isConnecting ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                    <span>Connecting...</span>
+                  </div>
+                ) : userAddress ? (
+                  abbreviateAddress(userAddress)
+                ) : (
+                  "Connect Wallet"
+                )}
               </Button>
             )}
           </div>
@@ -177,8 +233,21 @@ const Header = () => {
                 Sign out
               </Button>
             ) : (
-              <Button onClick={handleConnectWallet} className="justify-start">
-                Connect Wallet
+              <Button 
+                onClick={handleConnectWallet} 
+                disabled={isConnecting}
+                className="justify-start"
+              >
+                {isConnecting ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                    <span>Connecting...</span>
+                  </div>
+                ) : userAddress ? (
+                  abbreviateAddress(userAddress)
+                ) : (
+                  "Connect Wallet"
+                )}
               </Button>
             )}
           </nav>
