@@ -126,6 +126,7 @@ const Header = () => {
     { name: 'Home', path: '/' },
     { name: 'DJs', path: '/dj/featured' },
     { name: 'About', path: '/about' },
+    { name: 'Register as DJ', path: '/register-dj' },
   ];
   
   // Display wallet address if connected

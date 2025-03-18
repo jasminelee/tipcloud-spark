@@ -179,6 +179,17 @@ const HeroSection = () => {
                   Discover DJs
                 </Button>
               </Link>
+              <Link to="/register-dj">
+                <Button 
+                  variant="outline" 
+                  className="border-2 border-purple-500 hover:bg-purple-500/10 text-purple-500 font-bold
+                  px-8 py-4 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1
+                  w-full sm:w-auto"
+                  size="lg"
+                >
+                  Register as DJ
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="hidden lg:block">
@@ -289,6 +300,95 @@ const FeatureSection = () => {
   );
 };
 
+const DJPromotionSection = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <section className="py-20 bg-gradient-to-br from-purple-50 to-orange-50">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-6">
+              Are You a <span className="text-purple-600">SoundCloud DJ</span>?
+            </h2>
+            <p className="text-lg text-gray-700 mb-8">
+              Join TipTune and start receiving sBTC tips directly from your fans. Connect your SoundCloud profile, set up your wallet, and start earning today.
+            </p>
+            <ul className="space-y-4 mb-8">
+              <li className="flex items-start">
+                <div className="mr-4 mt-1 bg-purple-100 rounded-full p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span>Connect your SoundCloud profile</span>
+              </li>
+              <li className="flex items-start">
+                <div className="mr-4 mt-1 bg-purple-100 rounded-full p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span>Set up your Bitcoin wallet to receive tips</span>
+              </li>
+              <li className="flex items-start">
+                <div className="mr-4 mt-1 bg-purple-100 rounded-full p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span>Start receiving tips from your fans around the world</span>
+              </li>
+            </ul>
+            <Button 
+              onClick={() => navigate('/register-dj')}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-full shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1"
+              size="lg"
+            >
+              Register as DJ Now
+            </Button>
+          </div>
+          <div className="relative">
+            <div className="absolute -top-6 -right-6 w-64 h-64 bg-orange-200 rounded-full filter blur-3xl opacity-50 z-0" />
+            <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-200 rounded-full filter blur-3xl opacity-50 z-0" />
+            <div className="relative z-10 bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="bg-purple-600 h-2" />
+              <div className="p-8">
+                <div className="flex items-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                    DJ
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-xl font-medium">Your DJ Name</h3>
+                    <p className="text-gray-500">Your favorite genre</p>
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <div className="h-3 w-24 bg-gray-200 rounded-full mb-2"></div>
+                  <div className="h-2 w-full bg-gray-100 rounded-full"></div>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-gray-500">Tips Received</div>
+                    <div className="text-sm font-medium">0.0012 sBTC</div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-500">Supporters</div>
+                    <div className="text-sm font-medium">24 fans</div>
+                  </div>
+                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                  This could be you!
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Index = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -301,6 +401,7 @@ const Index = () => {
         <HeroSection />
         <FeaturedDJs />
         <FeatureSection />
+        <DJPromotionSection />
       </main>
       <Footer />
     </div>
