@@ -58,8 +58,6 @@ const ConnectWallet = () => {
             console.error("Error fetching wallet addresses:", addressError);
           }
         }
-        
-        // Remove automatic redirection - let the user control navigation
       } catch (error) {
         console.error("Error checking wallet connection:", error);
         setIsConnected(false);
@@ -69,7 +67,7 @@ const ConnectWallet = () => {
     };
     
     checkConnection();
-  }, [navigate]);
+  }, []);
   
   const handleConnectWallet = async () => {
     setIsConnecting(true);
@@ -92,8 +90,6 @@ const ConnectWallet = () => {
                   setUserAddress(stacksAddress);
                 }
               }
-              
-              // Don't automatically redirect
             } else {
               toast.error("Failed to connect Leather wallet", {
                 description: "Connection was rejected or failed. Please try again."
@@ -113,8 +109,6 @@ const ConnectWallet = () => {
             if (result.connected) {
               setIsConnected(true);
               toast.success("Wallet connected successfully!");
-              
-              // Don't automatically redirect
             } else {
               toast.error("Failed to connect wallet", {
                 description: "Connection was rejected or failed. Please try again."

@@ -77,7 +77,7 @@ const HeroSection = () => {
           
           if (result.connected) {
             setIsWalletConnected(true);
-            toast.success("Leather wallet connected successfully!");
+            toast.success("Wallet connected successfully!");
             
             // Use addresses from the connection result if available
             if (result.addresses) {
@@ -89,10 +89,7 @@ const HeroSection = () => {
             
             // Check auth status after wallet connection
             const { data } = await supabase.auth.getSession();
-            if (!data.session) {
-              // Navigate to connect page for authentication only if not already authenticated
-              navigate('/connect');
-            } else {
+            if (data.session) {
               setIsLoggedIn(true);
               
               // Check for DJ profile
@@ -105,13 +102,13 @@ const HeroSection = () => {
               setIsDJProfile(!!djProfile);
             }
           } else {
-            toast.error("Failed to connect Leather wallet", {
+            toast.error("Failed to connect wallet", {
               description: "Connection was rejected or failed. Please try again."
             });
           }
         } catch (error) {
-          console.error("Error connecting to Leather wallet:", error);
-          toast.error("Error connecting to Leather wallet", {
+          console.error("Error connecting to wallet:", error);
+          toast.error("Error connecting to wallet", {
             description: error instanceof Error ? error.message : "Unknown error occurred"
           });
         }
@@ -131,9 +128,17 @@ const HeroSection = () => {
             
             // Check auth status
             const { data } = await supabase.auth.getSession();
-            if (!data.session) {
-              // Navigate to connect page for authentication only if not already authenticated
-              navigate('/connect');
+            if (data.session) {
+              setIsLoggedIn(true);
+              
+              // Check for DJ profile
+              const { data: djProfile } = await supabase
+                .from('dj_profiles')
+                .select('id')
+                .eq('id', data.session.user.id)
+                .single();
+                
+              setIsDJProfile(!!djProfile);
             }
           } else {
             toast.error("Failed to connect wallet", {

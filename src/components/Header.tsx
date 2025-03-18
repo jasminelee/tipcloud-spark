@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut, Music } from 'lucide-react';
@@ -87,9 +86,6 @@ const Header = () => {
             .single();
             
           setIsDJProfile(!!djProfile);
-        } else {
-          // If wallet is connected but not authenticated with Supabase
-          navigate('/connect'); // Only redirect if not authenticated
         }
       } else {
         toast.error("Failed to connect wallet. Please try again.");
