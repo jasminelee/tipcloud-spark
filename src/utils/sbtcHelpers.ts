@@ -3,11 +3,15 @@ import {
   openContractCall,
   UserSession,
   AppConfig,
-  showConnect
+  showConnect,
+  request,
+  getLocalStorage,
+  isConnected
 } from '@stacks/connect';
 import {
   FungibleConditionCode,
-  PostConditionMode
+  PostConditionMode,
+  Cl
 } from '@stacks/transactions';
 import { 
   StacksNetwork,
@@ -16,14 +20,14 @@ import {
 } from '@stacks/network';
 
 // Constants
-const SBTC_CONTRACT_ADDRESS = 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR';
-const SBTC_CONTRACT_NAME = 'wrapped-bitcoin';
-const SBTC_ASSET_NAME = 'wrapped-bitcoin';
+const SBTC_CONTRACT_ADDRESS = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
+const SBTC_CONTRACT_NAME = 'sbtc-token';
+const SBTC_FULL_CONTRACT = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}`;
 const SBTC_EXPLORER_URL = 'https://explorer.stacks.co/txid';
 const SATOSHIS_PER_BTC = 100000000;
 
 // Network configuration - use testnet for development, change to mainnet for production
-const network = STACKS_TESTNET;
+const network = 'testnet';
 
 // AppConfig for Stacks Connect
 const appConfig = new AppConfig(['store_write']);
@@ -42,15 +46,14 @@ export const satoshisToSBTC = (satoshis: number): number => {
  * Convert sBTC to satoshis
  */
 export const sBTCToSatoshis = (sbtc: number): number => {
-  return sbtc * SATOSHIS_PER_BTC;
+  return Math.floor(sbtc * SATOSHIS_PER_BTC);
 };
 
 /**
  * Format satoshis for display
  */
 export const formatSatoshis = (satoshis: number): string => {
-  // Format large numbers with commas
-  return satoshis.toLocaleString();
+  return `${satoshis.toLocaleString()} sats`;
 };
 
 /**
@@ -73,52 +76,39 @@ export const satoshisToUSD = (satoshis: number): string => {
  * Connect to the SBTC wallet
  */
 export const connectSBTCWallet = async () => {
-  return new Promise<{connected: boolean, addresses?: {symbol: string, address: string}[]}>((resolve) => {
-    showConnect({
-      appDetails: {
-        name: 'TipTune',
-        icon: window.location.origin + '/logo.png',
-      },
-      redirectTo: '/',
-      onFinish: (data) => {
-        // Handle the data properly, as it doesn't have an 'addresses' property directly
-        const userData = userSession.loadUserData();
-        resolve({
-          connected: true,
-          addresses: [
-            {
-              symbol: 'STX',
-              address: userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet
-            }
-          ]
-        });
-      },
-      onCancel: () => {
-        resolve({
-          connected: false
-        });
-      },
-      userSession
-    });
-  });
+  try {
+    const response = await request({ forceWalletSelect: true }, 'getAddresses');
+    return {
+      connected: true,
+      addresses: response.addresses
+    };
+  } catch (error) {
+    console.error('Error connecting wallet:', error);
+    return { connected: false };
+  }
 };
 
 /**
  * Check if wallet is connected
  */
-export const isSBTCWalletConnected = async (): Promise<boolean> => {
-  return userSession.isUserSignedIn();
+export const isSBTCWalletConnected = (): boolean => {
+  return isConnected();
 };
 
 /**
  * Get wallet address
  */
-export const getWalletAddress = async (): Promise<string | null> => {
-  if (!userSession.isUserSignedIn()) {
-    return null;
-  }
-  const userData = userSession.loadUserData();
-  return userData.profile.stxAddress.mainnet || userData.profile.stxAddress.testnet;
+export const getWalletAddress = (): string | null => {
+  const userData = getLocalStorage();
+  console.log('userData', userData);
+  
+  // If no addresses, return null
+  if (!userData?.addresses?.stx?.length) return null;
+  
+  // If multiple addresses exist, return the last one as it's likely
+  // the one actively selected in the wallet UI
+  const addresses = userData.addresses.stx;
+  return addresses[addresses.length - 1].address;
 };
 
 /**
@@ -138,29 +128,39 @@ export const sendSbtcTip = async ({
   onCancel
 }: SendSbtcTipOptions) => {
   try {
-    if (!userSession.isUserSignedIn()) {
-      throw new Error('User not signed in');
+    // Get the sender's address - use the most recently connected one
+    const senderAddress = getWalletAddress();
+    
+    if (!senderAddress) {
+      throw new Error('Wallet not connected');
+    }
+    
+    // Verify the sender and recipient are different addresses
+    if (senderAddress === recipientAddress) {
+      throw new Error('Cannot send a tip to yourself');
     }
 
-    // For simplicity, using STX for tips as an example
-    // In a real implementation, you would use the sBTC token contract
-    openSTXTransfer({
-      recipient: recipientAddress,
-      amount: satoshiAmount.toString(), // Convert to string as required by the API
-      memo: 'Tip from TipTune',
+    console.log('Sending from address:', senderAddress);
+    console.log('Sending to address:', recipientAddress);
+    console.log('Amount in satoshis:', satoshiAmount);
+    
+    // Create contract call transaction
+    const response = await request('stx_callContract', {
       network,
-      appDetails: {
-        name: 'TipTune',
-        icon: window.location.origin + '/logo.png',
-      },
-      onFinish: (data) => {
-        if (onFinish) onFinish(data);
-      },
-      onCancel: () => {
-        if (onCancel) onCancel();
-      },
+      contract: SBTC_FULL_CONTRACT,
+      functionName: 'transfer',
+      functionArgs: [
+        Cl.uint(satoshiAmount),
+        Cl.standardPrincipal(senderAddress),
+        Cl.standardPrincipal(recipientAddress),
+      ],
+      postConditionMode: 'allow'
     });
-    } catch (error) {
+    
+    // Handle callbacks after the request completes
+    if (onFinish) onFinish(response);
+    return response;
+  } catch (error) {
     console.error('Error sending sBTC tip:', error);
     throw error;
   }
@@ -170,5 +170,5 @@ export const sendSbtcTip = async ({
  * Get transaction explorer URL
  */
 export const getTransactionExplorerUrl = (txId: string): string => {
-  return `${SBTC_EXPLORER_URL}/${txId}?chain=mainnet`;
+  return `${SBTC_EXPLORER_URL}/${txId}?chain=${network}`;
 };

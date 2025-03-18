@@ -63,11 +63,11 @@ const TipModal: React.FC<TipModalProps> = ({
   // Check if wallet is connected
   const checkWalletConnection = async () => {
     try {
-      const connected = await isSBTCWalletConnected();
+      const connected = isSBTCWalletConnected();
       setIsWalletConnected(connected);
       
       if (connected) {
-        const address = await getWalletAddress();
+        const address = getWalletAddress();
         setSenderAddress(address);
       }
     } catch (error) {
@@ -83,11 +83,10 @@ const TipModal: React.FC<TipModalProps> = ({
       const result = await connectSBTCWallet();
       setIsWalletConnected(result.connected);
       
-      if (result.connected && result.addresses) {
-        const stacksAddress = result.addresses.find(addr => addr.symbol === 'STX')?.address;
-        if (stacksAddress) {
-          setSenderAddress(stacksAddress);
-        }
+      if (result.connected) {
+        // After connecting, get the wallet address using our helper
+        const address = getWalletAddress();
+        setSenderAddress(address);
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
@@ -124,6 +123,12 @@ const TipModal: React.FC<TipModalProps> = ({
 
     if (!actualAmount || actualAmount <= 0) {
       toast.error('Please enter a valid amount');
+      return;
+    }
+
+    // Prevent sending to yourself
+    if (senderAddress === walletAddress) {
+      toast.error('Cannot send tip to yourself');
       return;
     }
 
@@ -315,6 +320,15 @@ const TipModal: React.FC<TipModalProps> = ({
                 <div className="text-sm truncate">{walletAddress}</div>
               </div>
 
+              {senderAddress === walletAddress && (
+                <div className="bg-red-50 rounded-lg p-3 flex items-start gap-2">
+                  <AlertCircle size={18} className="text-red-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-800">
+                    Warning: The sender and recipient addresses are the same. You cannot send a tip to yourself.
+                  </div>
+                </div>
+              )}
+
               <div className="bg-amber-50 rounded-lg p-3 flex items-start gap-2">
                 <AlertCircle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-800">
@@ -334,7 +348,7 @@ const TipModal: React.FC<TipModalProps> = ({
               <Button 
                 className="bg-soundcloud hover:bg-soundcloud-dark text-white"
                 onClick={handleSendTip}
-                disabled={isSending}
+                disabled={isSending || senderAddress === walletAddress}
               >
                 {isSending ? (
                   <>
