@@ -159,7 +159,7 @@ export const sendSbtcTip = async ({
     // Handle callbacks after the request completes
     if (onFinish) onFinish(response);
     return response;
-  } catch (error) {
+    } catch (error) {
     console.error('Error sending sBTC tip:', error);
     throw error;
   }

@@ -41,7 +41,7 @@ const HeroSection = () => {
       }
       
       // Check if Leather wallet is installed
-      if (window.LeatherProvider) {
+      if ((window as any).LeatherProvider) {
         try {
           const result = await connectSBTCWallet();
           
@@ -73,9 +73,9 @@ const HeroSection = () => {
       }
       
       // Check for other wallet types
-      if (window.btc) {
+      if ((window as any).btc) {
         try {
-          const result = await connectsBTCWallet();
+          const result = await connectSBTCWallet();
           
           if (result.connected) {
             setIsWalletConnected(true);
@@ -205,11 +205,18 @@ const HeroSection = () => {
                     <p className="text-sm text-muted-foreground">House · 42.5K followers</p>
                   </div>
                 </div>
-                
-                <div className="rounded-lg overflow-hidden bg-secondary/50 h-48 mb-6 flex items-center justify-center">
-                  <div className="text-center">
-                    <Music className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                    <p className="text-sm text-muted-foreground mt-2">SoundCloud Player</p>
+
+                <div className="rounded-lg overflow-hidden h-80 mb-6">
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    scrolling="no" 
+                    frameBorder="no" 
+                    allow="autoplay" 
+                    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1775592786&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+                  ></iframe>
+                  <div style={{fontSize: "10px", color: "#cccccc", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", fontFamily: "Interstate,Lucida Grande,Lucida Sans Unicode,Lucida Sans,Garuda,Verdana,Tahoma,sans-serif", fontWeight: 100}}>
+                    <a href="https://soundcloud.com/nicolasvianadj" title="Nicolas Viana" target="_blank" style={{color: "#cccccc", textDecoration: "none"}}>Nicolas Viana</a> · <a href="https://soundcloud.com/nicolasvianadj/im-happy-for-you-molac-and-nicolas-viana-remix-words-not-enough-1" title="I'm Happy for You (Molac and Nicolas Viana Remix) [WORDS NOT ENOUGH]" target="_blank" style={{color: "#cccccc", textDecoration: "none"}}>I'm Happy for You (Molac and Nicolas Viana Remix) [WORDS NOT ENOUGH]</a>
                   </div>
                 </div>
                 

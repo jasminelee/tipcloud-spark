@@ -145,7 +145,7 @@ const TipModal: React.FC<TipModalProps> = ({
         },
         onCancel: () => {
           toast.info('Transaction cancelled');
-          setIsSending(false);
+      setIsSending(false);
         }
       });
     } catch (error) {
@@ -170,7 +170,7 @@ const TipModal: React.FC<TipModalProps> = ({
       setSelectedAmount(1000); // Default back to 1000 sats
     }
   };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
@@ -191,22 +191,22 @@ const TipModal: React.FC<TipModalProps> = ({
               {djProfileImage ? (
                 <img 
                   src={djProfileImage} 
-                  alt={djName}
+                  alt={djName} 
                   className="h-full w-full object-cover"
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground">
                   DJ
-                </div>
+              </div>
               )}
-            </div>
+              </div>
             <div>
               <div className="font-medium">You're tipping</div>
               <div className="text-soundcloud">{djName}</div>
             </div>
           </DialogDescription>
         </DialogHeader>
-
+            
         {step === 'amount' ? (
           <>
             <div className="space-y-4 py-2">
@@ -231,7 +231,7 @@ const TipModal: React.FC<TipModalProps> = ({
                   ))}
                 </div>
               </div>
-
+              
               <div>
                 <Label>Custom Amount</Label>
                 <Input
@@ -244,10 +244,10 @@ const TipModal: React.FC<TipModalProps> = ({
                 {actualAmount > 0 && (
                   <div className="text-xs text-muted-foreground mt-1">
                     Approximately {satoshisToUSD(actualAmount)}
-                  </div>
+              </div>
                 )}
               </div>
-
+              
               <div>
                 <Label>Message (Optional)</Label>
                 <Textarea 
@@ -258,17 +258,17 @@ const TipModal: React.FC<TipModalProps> = ({
                 />
               </div>
             </div>
-
+            
             <DialogFooter className="mt-4">
               {isWalletConnected ? (
-                <Button 
+            <Button 
                   className="w-full bg-soundcloud hover:bg-soundcloud-dark text-white"
                   disabled={!actualAmount || actualAmount <= 0}
                   onClick={handleContinue}
-                >
-                  Continue
-                  <ArrowRight size={16} className="ml-2" />
-                </Button>
+            >
+              Continue
+              <ArrowRight size={16} className="ml-2" />
+            </Button>
               ) : (
                 <Button 
                   className="w-full"
@@ -291,11 +291,11 @@ const TipModal: React.FC<TipModalProps> = ({
           <>
             <div className="space-y-4 py-2">
               <div className="rounded-lg border p-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-muted-foreground">Amount</span>
+              <div className="flex justify-between mb-2">
+                <span className="text-muted-foreground">Amount</span>
                   <span className="font-medium">{actualAmount.toLocaleString()} sats</span>
-                </div>
-                <div className="flex justify-between">
+              </div>
+              <div className="flex justify-between">
                   <span className="text-muted-foreground">Approx. USD</span>
                   <span>{satoshisToUSD(actualAmount)}</span>
                 </div>
@@ -336,7 +336,7 @@ const TipModal: React.FC<TipModalProps> = ({
                 </div>
               </div>
             </div>
-
+            
             <DialogFooter className="space-x-2 mt-4">
               <Button 
                 variant="outline" 
