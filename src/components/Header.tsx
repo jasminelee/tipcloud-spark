@@ -1,220 +1,189 @@
+
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, User, LogOut, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import AnimatedLogo from '@/components/AnimatedLogo';
-import { connectSBTCWallet, isSBTCWalletConnected } from '@/utils/sbtcHelpers';
+import { supabase } from '@/integrations/supabase/client';
+import { isSBTCWalletConnected, connectSBTCWallet } from '@/utils/sbtcHelpers';
+import { toast } from 'sonner';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
-  const [userAddress, setUserAddress] = useState("");
+  const navigate = useNavigate();
   const location = useLocation();
-  
-  // Helper function to abbreviate addresses
-  const abbreviateAddress = (address: string) => {
-    if (!address) return '';
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isDJProfile, setIsDJProfile] = useState(false);
   
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+    const checkWalletConnection = async () => {
+      // Check for wallet connection status without triggering UI
+      const isConnected = await isSBTCWalletConnected();
+      if (!isConnected) return;
+      
+      // Check if user is logged in
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        setIsLoggedIn(true);
+        setUserId(data.session.user.id);
+        
+        // Check if user has a DJ profile
+        const { data: djProfile } = await supabase
+          .from('dj_profiles')
+          .select('id')
+          .eq('id', data.session.user.id)
+          .single();
+          
+        setIsDJProfile(!!djProfile);
+      }
     };
     
-    window.addEventListener('scroll', handleScroll);
-    
-    // Don't check wallet connection on page load
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
+    checkWalletConnection();
   }, [location.pathname]);
-
-  const handleConnectWallet = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (isWalletConnected) {
-      // If already connected, do nothing
-      return;
-    }
-    
-    setIsConnecting(true);
-    
+  
+  const handleConnectWallet = async () => {
     try {
-      if (typeof window === 'undefined') {
-        toast.error("Not in browser environment");
-        return;
-      }
-      
-      // Check if Leather wallet is installed
-      if (window.LeatherProvider) {
-        try {
-          const result = await connectSBTCWallet();
-          
-          if (result.connected) {
-            setIsWalletConnected(true);
-            toast.success("Leather wallet connected successfully!");
-            
-            // Use addresses from the connection result if available
-            if (result.addresses) {
-              const stacksAddress = result.addresses.find(addr => addr.symbol === "STX")?.address;
-              if (stacksAddress) {
-                setUserAddress(stacksAddress);
-              }
-            }
-          } else {
-            toast.error("Failed to connect Leather wallet", {
-              description: "Connection was rejected or failed. Please try again."
-            });
-          }
-        } catch (error) {
-          console.error("Error connecting to Leather wallet:", error);
-          toast.error("Error connecting to Leather wallet", {
-            description: error instanceof Error ? error.message : "Unknown error occurred"
-          });
-        }
-        
-        setIsConnecting(false);
-        return;
-      }
-      
-      // Check for other wallet types
-      if (window.btc) {
-        try {
-          const result = await connectSBTCWallet();
-          
-          if (result.connected) {
-            setIsWalletConnected(true);
-            toast.success("Wallet connected successfully!");
-          } else {
-            toast.error("Failed to connect wallet", {
-              description: "Connection was rejected or failed. Please try again."
-            });
-          }
-        } catch (error) {
-          console.error("Error connecting wallet:", error);
-          toast.error("Error connecting wallet", {
-            description: error instanceof Error ? error.message : "Unknown error occurred"
-          });
-        }
-        
-        setIsConnecting(false);
-        return;
-      }
-      
-      // No wallet detected
-      toast.error("No Bitcoin wallet detected", {
-        description: "Please install Leather or another compatible wallet"
-      });
+      // Pass explicit intent to trigger wallet UI
+      await connectSBTCWallet();
+      navigate('/connect');
     } catch (error) {
-      console.error("Unexpected error:", error);
-      toast.error("Unexpected error occurred", {
-        description: error instanceof Error ? error.message : "Unknown error occurred"
-      });
-    } finally {
-      setIsConnecting(false);
+      console.error("Failed to connect wallet:", error);
+      toast.error("Failed to connect wallet. Please try again.");
     }
   };
-
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'DJs', path: '/dj/featured' },
-    { name: 'About', path: '/about' },
-  ];
   
-  // Display wallet address if connected
-  const getWalletButtonText = () => {
-    if (isConnecting) {
-      return (
-        <div className="flex items-center space-x-2">
-          <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
-          <span>Connecting...</span>
-        </div>
-      );
-    } else if (isWalletConnected) {
-      return userAddress ? abbreviateAddress(userAddress) : "Wallet Connected";
-    } else {
-      return "Connect Wallet";
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      setUserId(null);
+      setIsDJProfile(false);
+      toast.success("Successfully signed out");
+      navigate('/');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out. Please try again.");
     }
+  };
+  
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+  
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
   };
   
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out
-      ${isScrolled ? 'bg-white/80 backdrop-blur-lg shadow-soft py-3' : 'bg-transparent py-5'}`}>
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center">
-          <Link to="/" className="z-10">
-            <AnimatedLogo />
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-6 md:gap-10">
+          <Link to="/" className="flex items-center space-x-2" onClick={closeMobileMenu}>
+            <span className="font-display text-2xl font-bold">TipTune</span>
           </Link>
           
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`font-medium transition-colors duration-200
-                  ${location.pathname === link.path 
-                    ? 'text-soundcloud' 
-                    : 'text-foreground/80 hover:text-soundcloud'}`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <Button 
-              className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
-              shadow-md transition-all duration-300 ease-out transform hover:-translate-y-0.5"
-              onClick={handleConnectWallet}
-              disabled={isConnecting}
-            >
-              {getWalletButtonText()}
-            </Button>
+          <nav className="hidden md:flex gap-6">
+            <Link to="/" className={`text-sm font-medium transition-colors hover:text-foreground/80 ${location.pathname === '/' ? 'text-foreground' : 'text-foreground/60'}`}>
+              Home
+            </Link>
+            <Link to="/about" className={`text-sm font-medium transition-colors hover:text-foreground/80 ${location.pathname === '/about' ? 'text-foreground' : 'text-foreground/60'}`}>
+              About
+            </Link>
           </nav>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-2">
+            {isLoggedIn ? (
+              <>
+                {!isDJProfile && (
+                  <Link to="/register-dj">
+                    <Button variant="outline" size="sm">
+                      <Music className="h-4 w-4 mr-2" />
+                      Register as DJ
+                    </Button>
+                  </Link>
+                )}
+                {isDJProfile && (
+                  <Link to={`/dj/${userId}`}>
+                    <Button variant="outline" size="sm">
+                      <Music className="h-4 w-4 mr-2" />
+                      My DJ Profile
+                    </Button>
+                  </Link>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button onClick={handleConnectWallet}>
+                Connect Wallet
+              </Button>
+            )}
+          </div>
           
           {/* Mobile Menu Button */}
-          <button 
-            className="md:hidden z-10 text-foreground"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-          
-          {/* Mobile Menu */}
-          <div className={`fixed inset-0 bg-white z-0 transform transition-transform duration-300 ease-in-out
-            ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden`}
-          >
-            <div className="flex flex-col items-center justify-center h-full space-y-8 pt-16">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`font-medium text-xl transition-colors duration-200
-                    ${location.pathname === link.path 
-                      ? 'text-soundcloud' 
-                      : 'text-foreground/80 hover:text-soundcloud'}`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              <Button 
-                className="bg-soundcloud hover:bg-soundcloud-dark text-white font-medium px-6 py-2 rounded-full 
-                shadow-md transition-all duration-300 ease-out"
-                onClick={handleConnectWallet}
-                disabled={isConnecting}
-              >
-                {getWalletButtonText()}
-              </Button>
-            </div>
-          </div>
+          <Button variant="outline" size="icon" className="md:hidden" onClick={toggleMobileMenu}>
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
         </div>
       </div>
+      
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="container md:hidden py-4 border-t">
+          <nav className="flex flex-col space-y-4">
+            <Link to="/" className="text-base" onClick={closeMobileMenu}>
+              Home
+            </Link>
+            <Link to="/about" className="text-base" onClick={closeMobileMenu}>
+              About
+            </Link>
+            {isLoggedIn && !isDJProfile && (
+              <Link to="/register-dj" className="text-base" onClick={closeMobileMenu}>
+                Register as DJ
+              </Link>
+            )}
+            {isLoggedIn && isDJProfile && (
+              <Link to={`/dj/${userId}`} className="text-base" onClick={closeMobileMenu}>
+                My DJ Profile
+              </Link>
+            )}
+            {isLoggedIn ? (
+              <Button variant="outline" onClick={handleSignOut} className="justify-start">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign out
+              </Button>
+            ) : (
+              <Button onClick={handleConnectWallet} className="justify-start">
+                Connect Wallet
+              </Button>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
