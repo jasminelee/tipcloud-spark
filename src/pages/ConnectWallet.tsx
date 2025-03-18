@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -19,9 +18,11 @@ const ConnectWallet = () => {
     const checkConnection = async () => {
       setCheckingConnection(true);
       try {
+        // First try the isSBTCWalletConnected function
         const connected = await isSBTCWalletConnected();
-        console.log("Wallet connection check result:", connected);
-        setIsConnected(connected);
+        
+        console.log("Wallet connection passive check result:", connected);
+        setIsConnected(!!connected);
         
         // If already connected, redirect to home after a short delay
         if (connected) {
@@ -42,28 +43,70 @@ const ConnectWallet = () => {
     setIsConnecting(true);
     
     try {
-      if (typeof window === 'undefined' || (!window.btc && !window.LeatherProvider)) {
-        toast.error("No Bitcoin wallet detected", {
-          description: "Please install Leather or another compatible wallet"
-        });
+      if (typeof window === 'undefined') {
+        toast.error("Not in browser environment");
         return;
       }
       
-      const connected = await connectSBTCWallet();
-      
-      if (connected) {
-        setIsConnected(true);
-        toast.success("Wallet connected successfully!");
-        // Redirect to home after successful connection
-        setTimeout(() => navigate('/'), 1000);
-      } else {
-        toast.error("Failed to connect wallet", {
-          description: "Please try again or use a different wallet"
-        });
+      // Check if Leather wallet is installed
+      if (window.LeatherProvider) {
+        try {
+          const connected = await connectSBTCWallet();
+          
+          if (connected) {
+            setIsConnected(true);
+            toast.success("Leather wallet connected successfully!");
+            // Redirect to home after successful connection
+            setTimeout(() => navigate('/'), 1000);
+          } else {
+            toast.error("Failed to connect Leather wallet", {
+              description: "Please try again or check if Leather wallet is properly set up"
+            });
+          }
+        } catch (error) {
+          console.error("Error connecting to Leather wallet:", error);
+          toast.error("Error connecting to Leather wallet", {
+            description: error instanceof Error ? error.message : "Unknown error occurred"
+          });
+        }
+        
+        setIsConnecting(false);
+        return;
       }
+      
+      // Check for other wallet types
+      if (window.btc) {
+        try {
+          const connected = await connectSBTCWallet();
+          
+          if (connected) {
+            setIsConnected(true);
+            toast.success("Wallet connected successfully!");
+            // Redirect to home after successful connection
+            setTimeout(() => navigate('/'), 1000);
+          } else {
+            toast.error("Failed to connect wallet", {
+              description: "Please try again or use a different wallet"
+            });
+          }
+        } catch (error) {
+          console.error("Error connecting wallet:", error);
+          toast.error("Error connecting wallet", {
+            description: error instanceof Error ? error.message : "Unknown error occurred"
+          });
+        }
+        
+        setIsConnecting(false);
+        return;
+      }
+      
+      // No wallet detected
+      toast.error("No Bitcoin wallet detected", {
+        description: "Please install Leather or another compatible wallet"
+      });
     } catch (error) {
-      console.error("Error connecting wallet:", error);
-      toast.error("Error connecting wallet", {
+      console.error("Unexpected error:", error);
+      toast.error("Unexpected error occurred", {
         description: error instanceof Error ? error.message : "Unknown error occurred"
       });
     } finally {
