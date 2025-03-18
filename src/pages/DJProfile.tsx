@@ -58,9 +58,9 @@ const DJProfile = () => {
           const djWithTracks = {
             ...data,
             tracks: SAMPLE_TRACKS,
-            location: data.location || 'Unknown Location',
+            location: (data as any).location || 'Unknown Location',
             joinedDate: data.created_at,
-            coverUrl: data.cover_url || "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2000&auto=format&fit=crop"
+            coverUrl: (data as any).cover_url || "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=2000&auto=format&fit=crop"
           };
           
           setDj(djWithTracks);
@@ -221,7 +221,17 @@ const DJProfile = () => {
               
               <div className="flex items-start mt-6 text-sm">
                 <div className="text-muted-foreground mr-2">Wallet:</div>
-                <div className="font-mono text-xs break-all">{dj.wallet_address}</div>
+                <div className="font-mono text-xs">
+                  {dj.wallet_address.slice(0, 6)}...{dj.wallet_address.slice(-4)}
+                  <span className="ml-2 text-xs text-muted-foreground cursor-pointer hover:text-soundcloud" 
+                        onClick={() => {
+                          navigator.clipboard.writeText(dj.wallet_address);
+                          toast.success("Wallet address copied to clipboard");
+                        }}
+                  >
+                    (copy)
+                  </span>
+                </div>
               </div>
             </div>
             
